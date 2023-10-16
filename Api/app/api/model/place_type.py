@@ -1,4 +1,5 @@
 from app.db import db
+from .place import Place
 
 
 class PlaceType(db.Model):
@@ -6,8 +7,8 @@ class PlaceType(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     type_name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.String(255))
 
-    places = db.relationship('place', backref='place_type', lazy=True)
+    places = db.relationship('Place', backref='place_type', lazy=True, passive_deletes=True)
 
     def __repr__(self): return '<Place type %s>' % self.type_name

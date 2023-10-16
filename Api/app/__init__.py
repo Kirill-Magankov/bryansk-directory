@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
+from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 
 from config import Config
@@ -14,10 +15,12 @@ def create_app(config_class=Config):
 
     CORS(app)
 
-    from .db import db
+    from .db import db, migrations
     db.init_app(app)
+    migrations.init_app(app, db)
 
-    migrate = Migrate(app, db)
+    from .api.model.marshmallow import ma
+    ma.init_app(app)
 
     from .api import blueprint as api
     app.register_blueprint(api, url_prefix='/api/v1')
