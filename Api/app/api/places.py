@@ -1,7 +1,8 @@
 import io
+from datetime import datetime
 
 from flask import send_file, url_for
-from flask_restx import Namespace, Resource, reqparse
+from flask_restx import Namespace, Resource, reqparse, fields
 from werkzeug.datastructures import FileStorage
 
 from app.api.model.neighborhood import NeighborhoodModel
@@ -60,6 +61,58 @@ class PlaceById(Resource):
         return {'data': PlaceSchema().dump(place)}
 
 
+review_model = api.model('Review', {
+    'id': fields.Integer(readonly=True),
+    'date': fields.DateTime(default=datetime.now(), required=True),
+    'author_name': fields.String(),
+    'description': fields.String(),
+    'url': fields.String(),
+    'grade': fields.Integer(required=True, default=5)
+})
+
+
+@api.route('/<int:place_id>/reviews')
+class PlaceReviewList(Resource):
+    def get(self, place_id):
+        place = PlaceModel.query.get(place_id)
+        if not place: return messages.ErrorMessage.entry_not_exist('Place')
+        return {'data': PlaceReviewSchema(many=True).dump(place.reviews)}
+
+    @api.expect(review_model, validate=True)
+    def post(self, place_id):
+        data = api.payload
+        place = PlaceModel.query.get(place_id)
+        if not place: return messages.ErrorMessage.entry_not_exist('Place')
+
+        review_data = PlaceReviewModel(date=data.get('date'),
+                                       author_name=data.get('author_name'),
+                                       description=data.get('description'),
+                                       url=data.get('url'),
+                                       grade=data.get('grade'))
+
+        try:
+            place.reviews.append(review_data)
+            db.session.commit()
+            return {'message': 'Place review successfully added',
+                    'data': PlaceReviewSchema().dump(review_data)}
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
+
+@api.route('/reviews/<int:review_id>')
+class PlaceReviewById(Resource):
+    def delete(self, review_id):
+        review_data = PlaceReviewModel.query.get(review_id)
+        if not review_data: return messages.ErrorMessage.entry_not_exist('Place review')
+
+        try:
+            db.session.delete(review_data)
+            db.session.commit()
+            return messages.InfoMessage.entry_delete('Place review')
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
+
 @api.route('/<int:place_id>/images')
 class PlaceImageById(Resource):
     def get(self, place_id):
@@ -90,12 +143,17 @@ class PlaceUploadImage(Resource):
         place.images.append(place_image_model)
 
         try:
-            from app.db import db
             db.session.commit()
             return {'message': 'Image uploaded successfully',
                     'data': 'Image uuid: %s' % place_image_model.uuid}
         except Exception as e:
-            return {'error': 'Unexpected error', 'description': e}, 500
+            return messages.ErrorMessage.unexpected_error(e)
+
+
+neighborhood_model = api.model('Neighborhood', {
+    'id': fields.Integer(readonly=True),
+    'name': fields.String(required=True)
+})
 
 
 @api.route('/neighborhood')
@@ -106,6 +164,40 @@ class NeighborhoodsList(Resource):
         return {'count': len(neighborhoods),
                 'data': NeighborhoodSchema(many=True).dump(neighborhoods)}
 
+    @api.expect(neighborhood_model, validate=True)
+    def post(self):
+        data = api.payload
+        neighborhood = NeighborhoodModel(name=data.get('name', 'undefined'))
+
+        try:
+            db.session.add(neighborhood)
+            db.session.commit()
+            return {'message': 'Neighborhood successfully added',
+                    'data': NeighborhoodSchema().dump(neighborhood)}
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
+
+@api.route('/neighborhood/<int:neighborhood_id>')
+class NeighborhoodById(Resource):
+    def delete(self, neighborhood_id):
+        neighborhood = NeighborhoodModel.query.get(neighborhood_id)
+        if not neighborhood: return messages.ErrorMessage.entry_not_exist('Neighborhood')
+
+        try:
+            db.session.delete(neighborhood)
+            db.session.commit()
+            return messages.InfoMessage.entry_delete('Neighborhood')
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
+
+place_type_model = api.model('Place', {
+    'id': fields.Integer(readonly=True),
+    'type_name': fields.String(required=True),
+    'description': fields.String()
+})
+
 
 @api.route('/types')
 class PlacesTypeList(Resource):
@@ -115,14 +207,33 @@ class PlacesTypeList(Resource):
         return {'count': len(place_types),
                 'data': PlaceTypeSchema(many=True).dump(place_types)}
 
+    @api.expect(place_type_model, validate=True)
+    def post(self):
+        data = api.payload
+        place_type = PlaceTypeModel(type_name=data.get('type_name'),
+                                    description=data.get('description'))
 
-@api.route('/reviews')
-class PlaceReviewsList(Resource):
-    def get(self):
-        place_review = PlaceReviewModel.query.all()
-        if not place_review: return messages.ErrorMessage.entry_not_exist('Place review')
-        return {'count': len(place_review),
-                'data': PlaceReviewSchema(many=True).dump(place_review)}
+        try:
+            db.session.add(place_type)
+            db.session.commit()
+            return {'message': 'Place type successfully added',
+                    'data': PlaceTypeSchema().dump(place_type)}
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
+
+@api.route('/types/<int:place_type_id>')
+class PlaceTypeById(Resource):
+    def delete(self, place_type_id):
+        place_type = PlaceTypeModel.query.get(place_type_id)
+        if not place_type: return messages.ErrorMessage.entry_not_exist('Place type')
+
+        try:
+            db.session.delete(place_type)
+            db.session.commit()
+            return messages.InfoMessage.entry_delete('Place type')
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
 
 
 @api.route('/images/<string:uuid>')
@@ -140,4 +251,4 @@ class PlaceImageByUuid(Resource):
             db.session.commit()
             return messages.InfoMessage.entry_delete('Image')
         except Exception as e:
-            return {'error': 'Unexpected error', 'description': e}, 500
+            return messages.ErrorMessage.unexpected_error(e)

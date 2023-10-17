@@ -14,4 +14,11 @@ class PlaceReviewModel(db.Model):
     url = db.Column(db.String(255))
     grade = db.Column(db.Integer, nullable=False)
 
+    def __init__(self, grade, date=datetime.now(), author_name=None, description=None, url=None):
+        self.grade = grade
+        self.date = date
+        self.author_name = author_name
+        self.description = description
+        self.url = url
+
     def __repr__(self): return '<Place Review %s>' % self.description

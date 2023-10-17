@@ -10,4 +10,6 @@ class NeighborhoodModel(db.Model):
 
     places = db.relationship('PlaceModel', backref='neighborhood', lazy=True, passive_deletes=True)
 
+    def __init__(self, name): self.name = name
+
     def __repr__(self): return '<Neighborhood %s>' % self.neighborhood

@@ -11,4 +11,8 @@ class PlaceTypeModel(db.Model):
 
     places = db.relationship('PlaceModel', backref='place_type', lazy=True, passive_deletes=True)
 
+    def __init__(self, type_name, description=None):
+        self.type_name = type_name
+        self.description = description
+
     def __repr__(self): return '<Place type %s>' % self.type_name

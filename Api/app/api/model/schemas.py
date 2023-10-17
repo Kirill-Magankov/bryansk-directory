@@ -46,6 +46,15 @@ class PlaceReviewSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = PlaceReviewModel
 
+    # place = ma.Nested(ma.Schema.from_dict({
+    #     'id': fields.Integer(),
+    #     'name': fields.String(),
+    #     'address': fields.String(),
+    #     'description': fields.String(),
+    #     'phone_number': fields.String(),
+    #     'grade': fields.Float(),
+    # }))
+
 
 class FeedbackSchema(ma.SQLAlchemyAutoSchema):
     class Meta:

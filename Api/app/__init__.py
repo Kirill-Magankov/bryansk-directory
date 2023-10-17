@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, redirect
 from flask_cors import CORS
 
 from app.utils.blocklist import BLOCKLIST
@@ -32,3 +32,7 @@ def create_app(config_class=Config):
 
 
 app = create_app()
+
+
+@app.route('/')
+def index(): return redirect('/api/v1')

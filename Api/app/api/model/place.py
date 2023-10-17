@@ -16,6 +16,6 @@ class PlaceModel(db.Model):
     grade = db.Column(db.Float)
 
     images = db.relationship('PlaceImageModel', backref='place', lazy=True, passive_deletes=True)
-    place_reviews = db.relationship('PlaceReviewModel', backref='place', lazy=True, passive_deletes=True)
+    reviews = db.relationship('PlaceReviewModel', backref='place', lazy=True, passive_deletes=True)
 
     def __repr__(self): return "<Place %s>" % self.name

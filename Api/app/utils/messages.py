@@ -1,6 +1,6 @@
 class ErrorMessage:
     @staticmethod
-    def unexpected_error(): return {'error': 'Unexpected error'}, 400
+    def unexpected_error(message): return {'error': 'Unexpected error', 'description': message}, 500
 
     @staticmethod
     def user_not_exist(): return {'error': 'User not exist'}, 400
