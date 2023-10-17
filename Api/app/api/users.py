@@ -30,6 +30,7 @@ login_fields = api.model('Login', {
 class Users(Resource):
     def get(self):
         users = UserModel.query.all()
+        if not users: return messages.ErrorMessage.entry_not_exist('User')
         return {'count': len(users),
                 'data': UserSchema(many=True).dump(users)}
 

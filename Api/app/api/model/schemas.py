@@ -1,4 +1,5 @@
 from flask_marshmallow import Marshmallow
+from flask_marshmallow.fields import fields
 from flask_marshmallow.sqla import SQLAlchemyAutoSchema
 from app.api.model.feedback import FeedbackModel
 from app.api.model.place import PlaceModel
@@ -22,6 +23,7 @@ class PlaceSchema(ma.SQLAlchemyAutoSchema):
 
     place_type = ma.Nested('PlaceTypeSchema')
     place_reviews = ma.Nested('PlaceReviewSchema', many=True)
+    images = ma.Nested('PlaceImageSchema', many=True)
 
 
 class NeighborhoodSchema(ma.SQLAlchemyAutoSchema):
@@ -34,9 +36,9 @@ class PlaceTypeSchema(ma.SQLAlchemyAutoSchema):
         model = PlaceTypeModel
 
 
-class PlaceImageSchema(ma.SQLAlchemyAutoSchema):
+class PlaceImageSchema(ma.Schema):
     class Meta:
-        model = PlaceImageModel
+        fields = ('id', 'uuid')
 
 
 class PlaceReviewSchema(ma.SQLAlchemyAutoSchema):
