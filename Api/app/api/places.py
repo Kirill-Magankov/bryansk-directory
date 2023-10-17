@@ -1,7 +1,8 @@
 import io
 
 from flask import send_file, url_for
-from flask_restx import Namespace, Resource
+from flask_restx import Namespace, Resource, reqparse
+from sqlalchemy import desc
 
 from app.api.model.neighborhood import NeighborhoodModel
 from app.api.model.place import PlaceModel
@@ -13,11 +14,37 @@ from app.utils import messages
 
 api = Namespace('Places')
 
+place_parser = reqparse.RequestParser()
+place_parser.add_argument('neighborhood', help='Фильтрация по району')
+place_parser.add_argument('type', help='Тип места')
+place_parser.add_argument('sort', help='Сортировка по параметру', default='grade')
+place_parser.add_argument('order', choices=['asc', 'desc'], default='desc')
+
 
 @api.route('')
 class PlacesList(Resource):
+    @api.expect(place_parser)
     def get(self):
-        places = PlaceModel.query.all()
+        parser_args = place_parser.parse_args()
+
+        places = PlaceModel.query
+
+        neighborhood = parser_args.get('neighborhood')
+        place_type = parser_args.get('type')
+
+        sort_by = parser_args.get('sort')
+        place_order_by = parser_args.get('order')
+
+        if neighborhood: places = places.join(NeighborhoodModel).filter(NeighborhoodModel.name == neighborhood)
+        if place_type: places = places.join(PlaceTypeModel).filter(PlaceTypeModel.type_name == place_type)
+
+        if sort_by and hasattr(PlaceModel, sort_by):
+            if place_order_by == 'asc':
+                places = places.order_by(getattr(PlaceModel, sort_by).asc())
+            else:
+                places = places.order_by(getattr(PlaceModel, sort_by).desc())
+
+        places = places.all()
         if not places: return messages.ErrorMessage.entry_not_exist('Place')
         return {'count': len(places),
                 'data': PlaceSchema(many=True).dump(places)}
