@@ -7,6 +7,7 @@ from app.utils import messages
 api = Namespace('Feedbacks')
 
 
+@api.deprecated
 @api.route('')
 class FeedbackList(Resource):
     def get(self):

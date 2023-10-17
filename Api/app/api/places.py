@@ -2,7 +2,7 @@ import io
 
 from flask import send_file, url_for
 from flask_restx import Namespace, Resource, reqparse
-from sqlalchemy import desc
+from werkzeug.datastructures import FileStorage
 
 from app.api.model.neighborhood import NeighborhoodModel
 from app.api.model.place import PlaceModel
@@ -10,6 +10,7 @@ from app.api.model.place_images import PlaceImageModel
 from app.api.model.place_review import PlaceReviewModel
 from app.api.model.place_type import PlaceTypeModel
 from app.api.model.schemas import PlaceSchema, NeighborhoodSchema, PlaceTypeSchema, PlaceReviewSchema, PlaceImageSchema
+from app.db import db
 from app.utils import messages
 
 api = Namespace('Places')
@@ -50,6 +51,53 @@ class PlacesList(Resource):
                 'data': PlaceSchema(many=True).dump(places)}
 
 
+@api.route('/<int:place_id>')
+class PlaceById(Resource):
+    def get(self, place_id):
+        place = PlaceModel.query.get(place_id)
+        if not place: return messages.ErrorMessage.entry_not_exist('Place')
+
+        return {'data': PlaceSchema().dump(place)}
+
+
+@api.route('/<int:place_id>/images')
+class PlaceImageById(Resource):
+    def get(self, place_id):
+        place = PlaceModel.query.get(place_id)
+        if not place: return messages.ErrorMessage.entry_not_exist('Place')
+        return {'data': PlaceImageSchema(many=True).dump(place.images)}
+
+
+upload_parser = reqparse.RequestParser()
+upload_parser.add_argument('file', type=FileStorage, help='Изображение места',
+                           required=True, location='files')
+
+
+@api.route('/<int:place_id>/uploadImage')
+class PlaceUploadImage(Resource):
+    @api.expect(upload_parser)
+    def post(self, place_id):
+        parser_args = upload_parser.parse_args()
+        file = parser_args.get('file')
+        if not file: return messages.ErrorMessage.entry_not_exist('File')
+        if not file.filename.lower().endswith(('.jpg', '.png')):
+            return {'error': 'Unsupported file extension (available *.jpg, *.png)'}, 415
+
+        place = PlaceModel.query.get(place_id)
+        if not place: return messages.ErrorMessage.entry_not_exist('Place')
+
+        place_image_model = PlaceImageModel(file.read())
+        place.images.append(place_image_model)
+
+        try:
+            from app.db import db
+            db.session.commit()
+            return {'message': 'Image uploaded successfully',
+                    'data': 'Image uuid: %s' % place_image_model.uuid}
+        except Exception as e:
+            return {'error': 'Unexpected error', 'description': e}, 500
+
+
 @api.route('/neighborhood')
 class NeighborhoodsList(Resource):
     def get(self):
@@ -78,8 +126,18 @@ class PlaceReviewsList(Resource):
 
 
 @api.route('/images/<string:uuid>')
-class PlaceImage(Resource):
+class PlaceImageByUuid(Resource):
     def get(self, uuid):
         place_image = PlaceImageModel.query.filter(PlaceImageModel.uuid == uuid).first()
         if not place_image: return messages.ErrorMessage.entry_not_exist('Image')
         return send_file(io.BytesIO(place_image.image), mimetype='image/jpeg')
+
+    def delete(self, uuid):
+        place_image = PlaceImageModel.query.filter(PlaceImageModel.uuid == uuid).first()
+        if not place_image: return messages.ErrorMessage.entry_not_exist('Image')
+        try:
+            db.session.delete(place_image)
+            db.session.commit()
+            return messages.InfoMessage.entry_delete('Image')
+        except Exception as e:
+            return {'error': 'Unexpected error', 'description': e}, 500
