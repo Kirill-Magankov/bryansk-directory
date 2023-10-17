@@ -11,17 +11,27 @@ from app.utils.security_utils import password_hash_compare
 
 api = Namespace('Users')
 
+# region Swagger model schema
 user_model = api.model('User', {
     'id': fields.String(readonly=True),
     'username': fields.String(required=True),
     'password': fields.String(required=True),
 })
-
 login_fields = api.model('Login', {
     'username': fields.String(required=True),
     'password': fields.String(required=True),
     'remember': fields.Boolean(default=False)
 })
+
+
+# endregion
+
+@api.route('')
+class Users(Resource):
+    def get(self):
+        users = UserModel.query.all()
+        return {'count': len(users),
+                'data': UserSchema(many=True).dump(users)}
 
 
 @api.route('/login')
@@ -57,11 +67,3 @@ class UserLogout(Resource):
         jti = get_jwt()['jti']
         BLOCKLIST.add(jti)
         return messages.InfoMessage.user_logout()
-
-
-@api.route('/')
-class Users(Resource):
-    def get(self):
-        users = UserModel.query.all()
-        return {'count': len(users),
-                'data': UserSchema(many=True).dump(users)}
