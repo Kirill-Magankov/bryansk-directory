@@ -1,7 +1,8 @@
 from datetime import timedelta
 from uuid import uuid4
 from flask_jwt_extended import create_access_token
-from app import bcrypt
+
+from ..api.bcrypt import bcrypt
 
 
 def get_uuid(): return str(uuid4())

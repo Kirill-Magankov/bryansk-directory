@@ -1,9 +1,7 @@
 from flask import Flask
-from flask_bcrypt import Bcrypt
 from flask_cors import CORS
-from flask_marshmallow import Marshmallow
-from flask_migrate import Migrate
 
+from app.utils.blocklist import BLOCKLIST
 from config import Config
 
 from app.api.model import place, place_type, place_images, user, neighborhood, place_review, feedback
@@ -22,11 +20,15 @@ def create_app(config_class=Config):
     from .api.model.marshmallow import ma
     ma.init_app(app)
 
-    from .api import blueprint as api
-    app.register_blueprint(api, url_prefix='/api/v1')
+    from .api import jwt, create_api
+    jwt.init_app(app)
+
+    with app.app_context(): app.register_blueprint(create_api(), url_prefix='/api/v1')
+
+    from .api.bcrypt import bcrypt
+    bcrypt.init_app(app)
 
     return app
 
 
 app = create_app()
-bcrypt = Bcrypt(app)
