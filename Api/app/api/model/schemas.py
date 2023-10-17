@@ -1,43 +1,49 @@
 from flask_marshmallow import Marshmallow
 from flask_marshmallow.sqla import SQLAlchemyAutoSchema
-from app.api.model.feedback import Feedback
-from app.api.model.place import Place
-from app.api.model.place_images import PlaceImage
-from app.api.model.place_review import PlaceReview
-from app.api.model.place_type import PlaceType
-from app.api.model.user import User
+from app.api.model.feedback import FeedbackModel
+from app.api.model.place import PlaceModel
+from app.api.model.place_images import PlaceImageModel
+from app.api.model.place_review import PlaceReviewModel
+from app.api.model.place_type import PlaceTypeModel
+from app.api.model.user import UserModel
 
 from .marshmallow import ma
+from .neighborhood import NeighborhoodModel
 
 
 class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = User
+        model = UserModel
 
 
 class PlaceSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = Place
+        model = PlaceModel
 
     place_type = ma.Nested('PlaceTypeSchema')
     place_reviews = ma.Nested('PlaceReviewSchema', many=True)
 
 
+class NeighborhoodSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = NeighborhoodModel
+
+
 class PlaceTypeSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = PlaceType
+        model = PlaceTypeModel
 
 
 class PlaceImageSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = PlaceImage
+        model = PlaceImageModel
 
 
 class PlaceReviewSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = PlaceReview
+        model = PlaceReviewModel
 
 
 class FeedbackSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = Feedback
+        model = FeedbackModel

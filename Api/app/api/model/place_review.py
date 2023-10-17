@@ -3,7 +3,7 @@ from datetime import datetime
 from app.db import db
 
 
-class PlaceReview(db.Model):
+class PlaceReviewModel(db.Model):
     __tablename__ = 'place_reviews'
 
     id = db.Column(db.Integer, primary_key=True)

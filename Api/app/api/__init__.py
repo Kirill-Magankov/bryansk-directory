@@ -4,6 +4,7 @@ from flask_restx import Api
 
 from .users import api as users
 from .places import api as places
+from .feedback import api as feedback
 from ..utils.blocklist import BLOCKLIST
 
 jwt = JWTManager()
@@ -38,5 +39,6 @@ def create_api():
 
     api.add_namespace(places, '/places')
     api.add_namespace(users, '/users')
+    api.add_namespace(feedback, '/feedbacks')
 
     return blueprint

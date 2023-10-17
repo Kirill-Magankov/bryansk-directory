@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt, create_access_token
 from flask_restx import Namespace, Resource, fields
 
 from app.api.model.schemas import UserSchema
-from app.api.model.user import User
+from app.api.model.user import UserModel
 from app.utils import messages
 from app.utils.blocklist import BLOCKLIST
 from app.utils.security_utils import password_hash_compare
@@ -30,7 +30,7 @@ class UserLoginResource(Resource):
     def post(self):
         """Login user into the system"""
         data = api.payload
-        user = User.query.filter(User.username == data.get('username')).first()
+        user = UserModel.query.filter(UserModel.username == data.get('username')).first()
 
         if user:
             if password_hash_compare(user.password, data.get('password')):
@@ -62,6 +62,6 @@ class UserLogout(Resource):
 @api.route('/')
 class Users(Resource):
     def get(self):
-        users = User.query.all()
+        users = UserModel.query.all()
         return {'count': len(users),
                 'data': UserSchema(many=True).dump(users)}

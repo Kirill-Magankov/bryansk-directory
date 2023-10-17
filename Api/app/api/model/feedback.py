@@ -1,7 +1,7 @@
 from app.db import db
 
 
-class Feedback(db.Model):
+class FeedbackModel(db.Model):
     __tablename__ = 'feedbacks'
 
     id = db.Column(db.Integer, primary_key=True)

@@ -1,9 +1,9 @@
 from app.db import db
-from .place_images import PlaceImage
-from .place_review import PlaceReview
+from .place_images import PlaceImageModel
+from .place_review import PlaceReviewModel
 
 
-class Place(db.Model):
+class PlaceModel(db.Model):
     __tablename__ = 'places'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -15,7 +15,7 @@ class Place(db.Model):
     phone_number = db.Column(db.String(11))
     grade = db.Column(db.Float)
 
-    images = db.relationship('PlaceImage', backref='place', lazy=True, passive_deletes=True)
-    place_reviews = db.relationship('PlaceReview', backref='place', lazy=True, passive_deletes=True)
+    images = db.relationship('PlaceImageModel', backref='place', lazy=True, passive_deletes=True)
+    place_reviews = db.relationship('PlaceReviewModel', backref='place', lazy=True, passive_deletes=True)
 
     def __repr__(self): return "<Place %s>" % self.name

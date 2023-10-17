@@ -1,7 +1,7 @@
 from app.db import db
 
 
-class PlaceImage(db.Model):
+class PlaceImageModel(db.Model):
     __tablename__ = 'place_images'
 
     id = db.Column(db.Integer, primary_key=True)
