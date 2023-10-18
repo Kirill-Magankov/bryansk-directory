@@ -6,6 +6,7 @@ from flask_restx import Namespace, Resource, reqparse, fields
 from werkzeug.datastructures import FileStorage
 
 from app.api.model.neighborhood import NeighborhoodModel
+from app.api.model.nullable_string import NullableString
 from app.api.model.place import PlaceModel
 from app.api.model.place_images import PlaceImageModel
 from app.api.model.place_review import PlaceReviewModel
@@ -64,9 +65,9 @@ class PlaceById(Resource):
 review_model = api.model('Review', {
     'id': fields.Integer(readonly=True),
     'date': fields.DateTime(default=datetime.now(), required=True),
-    'author_name': fields.String(),
-    'description': fields.String(),
-    'url': fields.String(),
+    'author_name': NullableString,
+    'description': NullableString,
+    'url': NullableString,
     'grade': fields.Integer(required=True, default=5)
 })
 
@@ -144,7 +145,7 @@ class PlaceUploadImage(Resource):
 
         try:
             db.session.commit()
-            return {'message': 'Image uploaded successfully',
+            return {'message': 'Image successfully uploaded',
                     'data': 'Image uuid: %s' % place_image_model.uuid}
         except Exception as e:
             return messages.ErrorMessage.unexpected_error(e)
@@ -180,6 +181,19 @@ class NeighborhoodsList(Resource):
 
 @api.route('/neighborhood/<int:neighborhood_id>')
 class NeighborhoodById(Resource):
+    @api.expect(neighborhood_model, validate=True)
+    def put(self, neighborhood_id):
+        data = api.payload
+        neighborhood = NeighborhoodModel.query.get(neighborhood_id)
+        if not neighborhood: return messages.ErrorMessage.entry_not_exist('Neighborhood')
+        neighborhood.name = data.get('name', neighborhood.name)
+        try:
+            db.session.commit()
+            return {'message': 'Neighborhood successfully updated',
+                    'data': NeighborhoodSchema().dump(neighborhood)}
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
     def delete(self, neighborhood_id):
         neighborhood = NeighborhoodModel.query.get(neighborhood_id)
         if not neighborhood: return messages.ErrorMessage.entry_not_exist('Neighborhood')
@@ -195,7 +209,7 @@ class NeighborhoodById(Resource):
 place_type_model = api.model('Place', {
     'id': fields.Integer(readonly=True),
     'type_name': fields.String(required=True),
-    'description': fields.String()
+    'description': NullableString()
 })
 
 
@@ -224,6 +238,21 @@ class PlacesTypeList(Resource):
 
 @api.route('/types/<int:place_type_id>')
 class PlaceTypeById(Resource):
+    @api.expect(place_type_model, validate=True)
+    def put(self, place_type_id):
+        data = api.payload
+        place_type_data = PlaceTypeModel.query.get(place_type_id)
+        if not place_type_data: return messages.ErrorMessage.entry_not_exist('Place type')
+        place_type_data.type_name = data.get('type_name', place_type_data.type_name)
+        place_type_data.description = data.get('description', place_type_data.description)
+
+        try:
+            db.session.commit()
+            return {'message': 'Place type successfully updated',
+                    'data': PlaceTypeSchema().dump(place_type_data)}
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
     def delete(self, place_type_id):
         place_type = PlaceTypeModel.query.get(place_type_id)
         if not place_type: return messages.ErrorMessage.entry_not_exist('Place type')
