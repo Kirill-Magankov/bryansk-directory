@@ -23,10 +23,60 @@ place_parser.add_argument('type', help='Тип места')
 place_parser.add_argument('sort', help='Сортировка по параметру', default='grade')
 place_parser.add_argument('order', choices=['asc', 'desc'], default='desc')
 
+# region Swagger models
+upload_parser = reqparse.RequestParser()
+upload_parser.add_argument('file', type=FileStorage, help='Изображение места',
+                           required=True, location='files')
+
+neighborhood_model = api.model('Neighborhood', {
+    'id': fields.Integer(readonly=True),
+    'name': fields.String(required=True)
+})
+
+review_model = api.model('Review', {
+    'id': fields.Integer(readonly=True),
+    'date': fields.DateTime(default=datetime.now(), required=True),
+    'author_name': NullableString,
+    'description': NullableString,
+    'url': NullableString,
+    'grade': fields.Integer(required=True, default=5)
+})
+
+place_type_model = api.model('PlaceType`', {
+    'id': fields.Integer(readonly=True),
+    'type_name': fields.String(required=True),
+    'description': NullableString()
+})
+
+place_model = api.model('Place', {
+    'place_type': fields.Nested(place_type_model),
+    'neighborhood': fields.Nested(neighborhood_model),
+    'id': fields.Integer(readonly=True),
+    'name': NullableString,
+    'address': fields.String(required=True),
+    'description': NullableString,
+    'phone_number': NullableString,
+    'grade': fields.Float,
+})
+
+
+# endregion
+
+
+def get_model_data(model, payload, field_name):
+    model_data = model.query
+    if id_ := payload.get('id'):
+        model_data.get(id_)
+    else:
+        model = model_data.filter(getattr(model, field_name) == payload.get(field_name)).first()
+
+    # foreach for payloads keys and create the class with attributes?
+    return model
+
 
 @api.route('')
 class PlacesList(Resource):
-    @api.expect(place_parser)
+    @api.expect(place_parser, validate=True)
     def get(self):
         parser_args = place_parser.parse_args()
 
@@ -52,6 +102,46 @@ class PlacesList(Resource):
         return {'count': len(places),
                 'data': PlaceSchema(many=True).dump(places)}
 
+    @api.expect(place_model, validate=True)
+    def post(self):
+        data = api.payload
+
+        try:
+            if PlaceModel.query.filter(PlaceModel.name == data.get('name')).first():
+                return {'message': 'The place is already exists'}, 400
+
+            place_data = PlaceModel(
+                name=data.get('name'),
+                address=data.get('address'),
+                description=data.get('description'),
+                phone_number=data.get('phone_number'),
+                grade=data.get('grade'),
+            )
+
+            place_type_payload = data.get('place_type')
+            place_type_data = get_model_data(PlaceTypeModel, place_type_payload, 'type_name')
+
+            place_neighborhood_payload = data.get('neighborhood')
+            place_neighborhood_data = get_model_data(NeighborhoodModel, place_neighborhood_payload, 'name')
+
+            if not place_type_data:
+                place_type_data = PlaceTypeModel(type_name=place_type_payload.get('type_name'),
+                                                 description=place_type_payload.get('description'))
+
+            if not place_neighborhood_data:
+                place_neighborhood_data = NeighborhoodModel(name=place_neighborhood_payload.get('name'))
+
+            place_data.place_type = place_type_data
+            place_data.neighborhood = place_neighborhood_data
+
+            db.session.add(place_data)
+            db.session.commit()
+
+            return {'message': 'Place successfully added',
+                    'data': PlaceSchema().dump(place_data)}
+        except Exception as e:
+            return messages.ErrorMessage.entry_not_exist(e)
+
 
 @api.route('/<int:place_id>')
 class PlaceById(Resource):
@@ -61,15 +151,9 @@ class PlaceById(Resource):
 
         return {'data': PlaceSchema().dump(place)}
 
-
-review_model = api.model('Review', {
-    'id': fields.Integer(readonly=True),
-    'date': fields.DateTime(default=datetime.now(), required=True),
-    'author_name': NullableString,
-    'description': NullableString,
-    'url': NullableString,
-    'grade': fields.Integer(required=True, default=5)
-})
+    @api.expect(place_model, validate=True)
+    def put(self, place_id):
+        return {'message': 'success'}
 
 
 @api.route('/<int:place_id>/reviews')
@@ -122,14 +206,9 @@ class PlaceImageById(Resource):
         return {'data': PlaceImageSchema(many=True).dump(place.images)}
 
 
-upload_parser = reqparse.RequestParser()
-upload_parser.add_argument('file', type=FileStorage, help='Изображение места',
-                           required=True, location='files')
-
-
 @api.route('/<int:place_id>/uploadImage')
 class PlaceUploadImage(Resource):
-    @api.expect(upload_parser)
+    @api.expect(upload_parser, validate=True)
     def post(self, place_id):
         parser_args = upload_parser.parse_args()
         file = parser_args.get('file')
@@ -149,12 +228,6 @@ class PlaceUploadImage(Resource):
                     'data': 'Image uuid: %s' % place_image_model.uuid}
         except Exception as e:
             return messages.ErrorMessage.unexpected_error(e)
-
-
-neighborhood_model = api.model('Neighborhood', {
-    'id': fields.Integer(readonly=True),
-    'name': fields.String(required=True)
-})
 
 
 @api.route('/neighborhood')
@@ -181,6 +254,12 @@ class NeighborhoodsList(Resource):
 
 @api.route('/neighborhood/<int:neighborhood_id>')
 class NeighborhoodById(Resource):
+    def get(self, neighborhood_id):
+        neighborhood = NeighborhoodModel.query.get(neighborhood_id)
+        if not neighborhood: return messages.ErrorMessage.entry_not_exist('Neighborhood')
+
+        return {'data': NeighborhoodSchema().dump(neighborhood)}
+
     @api.expect(neighborhood_model, validate=True)
     def put(self, neighborhood_id):
         data = api.payload
@@ -204,13 +283,6 @@ class NeighborhoodById(Resource):
             return messages.InfoMessage.entry_delete('Neighborhood')
         except Exception as e:
             return messages.ErrorMessage.unexpected_error(e)
-
-
-place_type_model = api.model('Place', {
-    'id': fields.Integer(readonly=True),
-    'type_name': fields.String(required=True),
-    'description': NullableString()
-})
 
 
 @api.route('/types')
@@ -238,6 +310,12 @@ class PlacesTypeList(Resource):
 
 @api.route('/types/<int:place_type_id>')
 class PlaceTypeById(Resource):
+    def get(self, place_type_id):
+        place_type = PlaceTypeModel.query.get(place_type_id)
+        if not place_type: return messages.ErrorMessage.entry_not_exist('Place type')
+
+        return {'data': PlaceTypeSchema().dump(place_type)}
+
     @api.expect(place_type_model, validate=True)
     def put(self, place_type_id):
         data = api.payload

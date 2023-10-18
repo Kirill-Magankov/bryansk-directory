@@ -12,4 +12,4 @@ class NeighborhoodModel(db.Model):
 
     def __init__(self, name): self.name = name
 
-    def __repr__(self): return '<Neighborhood %s>' % self.neighborhood
+    def __repr__(self): return '<Neighborhood %s>' % self.name
