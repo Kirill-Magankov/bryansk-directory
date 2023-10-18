@@ -27,7 +27,7 @@ def users_list():
     api_url = "http://localhost:5000/api/v1/users"
     headers = {'Authorization': 'Bearer %s' % acces_token}
     response = requests.get(api_url, headers=headers)
-    return render_template('users.html', menu=menu, title='Список пользователей', user_list=response.json())
+    return render_template('users.html', menu=menu, title='Список пользователей', user_list=response.json()['data'])
 
 
 @app.route('/user_add', methods=["GET", "POST"])

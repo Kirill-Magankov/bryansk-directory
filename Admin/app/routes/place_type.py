@@ -27,7 +27,8 @@ def place_types_list():
     api_url = "http://localhost:5000/api/v1/places/types"
     headers = {'Authorization': 'Bearer %s' % acces_token}
     response = requests.get(api_url, headers=headers)
-    return render_template('placeTypes.html', menu=menu, title='Список типов мест', type_list=response.json())
+    return render_template('placeTypes.html', menu=menu, title='Список типов мест',
+                           type_list=response.json()['data'])
 
 
 @app.route('/place_type_add', methods=["GET", "POST"])

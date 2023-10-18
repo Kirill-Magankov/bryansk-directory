@@ -33,7 +33,7 @@ def neighborhoods_list():
     headers = {'Authorization': 'Bearer %s' % acces_token}
     response = requests.get(api_url, headers=headers)
     return render_template('neighborhoods.html', menu=menu, title='Список типов мест',
-                           neighborhoods_list=response.json())
+                           neighborhoods_list=response.json()['data'])
 
 
 @app.route('/neighborhood_add', methods=["GET", "POST"])
