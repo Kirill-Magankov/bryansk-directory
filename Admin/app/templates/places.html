@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="d-flex flex-column justify-content-center align-items-center">
+        <form method="post" class="mb-3">
+            <input type="text" class="form-control mb-3" placeholder="Поиск...">
+            <select class="form-select">
+                <option value="selected">Советский</option>
+                <option>Бежицкий</option>
+                <option>Володарский</option>
+                <option>Фокинский</option>
+            </select>
+            <select class="form-select">
+                <option value="selected">Парк</option>
+                <option>Отель</option>
+                <option>Ресторан</option>
+                <option>Кафе</option>
+            </select>
+            <select class="form-select">
+                <option value="selected">Лучшие оценки</option>
+                <option>Худшие оценки</option>
+            </select>
+            <input type="submit" class="btn btn-secondary" value="Поиск">
+        </form>
+    </div>
+    <div class="d-flex flex-column justify-content-center align-items-center">
+        <table class="table table-striped">
+            <tr>
+                <th>Название</th>
+                <th>Адрес</th>
+                <th>Описание</th>
+                <th>Номер телефона</th>
+                <th>Оценка</th>
+                <th>Тип места</th>
+                <th>Район</th>
+                <th colspan="2"><input type="submit" class="btn btn-primary" value="Добавить"></th>
+
+            </tr>
+            <tr>
+                <td>Курган-бессмертия</td>
+                <td>Брянск,ул. Дуки</td>
+                <td>Памятник жертвам ВОВ, олецетворяющий
+                    бессмертие их духа. Никто не забыт,
+                    ни что не забыто.
+                </td>
+                <td>Отсутствует</td>
+                <td>5</td>
+                <td>Парк</td>
+                <td>Советский</td>
+                <td><i class="fa fa-trash" aria-hidden="true"></i></td>
+                <td><i class="fas fa-edit"></i></td>
+            </tr>
+            <tr>
+                <td>Курган-бессмертия</td>
+                <td>Брянск,ул. Дуки</td>
+                <td>Памятник жертвам ВОВ, олецетворяющий
+                    бессмертие их духа. Никто не забыт,
+                    ни что не забыто.
+                </td>
+                <td>Отсутствует</td>
+                <td>5</td>
+                <td>Парк</td>
+                <td>Советский</td>
+                <td><i class="fa fa-trash" aria-hidden="true"></i></td>
+                <td><i class="fas fa-edit"></i></td>
+            </tr>
+        </table>
+    </div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="d-flex flex-column justify-content-center align-items-center" style="min-height: 50vh;">
+        <table class="table table-striped" style="max-width: 40vh;">
+            <tr>
+                <th>Номер записи</th>
+                <th>Тип места</th>
+                <th>Описание</th>
+                <th colspan="2"><a href="/place_type_add" class="btn btn-primary mb-3">Добавить</a></th>
+            </tr>
+            {% for item in type_list %}
+                <tr>
+                    <td>{{ item['id'] }}</td>
+                    <td>{{ item['type_name'] }}</td>
+                    <td>{{ item['description'] }}</td>
+                    <td><a href="{{ url_for('.delete_type',place_type_id=item['id']) }}"><i class="fa fa-trash"
+                                                                                            aria-hidden="true"></i></a>
+                    </td>
+                    <td><a href="{{ (url_for('.edit_type',place_type_id=item['id'])) }}"><i class="fas fa-edit"></i></a>
+                    </td>
+                </tr>
+            {% endfor %}
+
+
+        </table>
+    </div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="d-flex flex-column justify-content-center align-items-center" style="min-height: 50vh;">
+        <table class="table table-striped" style="max-width: 20vh;">
+            <tr>
+                <th>Номер записи</th>
+                <th>Имя пользователя</th>
+                <th colspan="2"><a href="/user_add" class="btn btn-primary mb-3">Добавить</a></th>
+            </tr>
+            {% for item in user_list %}
+                <tr>
+                    <td>{{ item['id'] }}</td>
+                    <td>{{ item['username'] }}</td>
+                    <td><a href="{{ url_for('.delete_user',user_id=item['id']) }}"><i class="fa fa-trash"
+                                                                                      aria-hidden="true"></i></a></td>
+                    <td><a href="{{ (url_for('.user_edit',user_id=item['id'])) }}"><i class="fas fa-edit"></i></a></td>
+                </tr>
+            {% endfor %}
+
+
+        </table>
+    </div>
+{% endblock %}

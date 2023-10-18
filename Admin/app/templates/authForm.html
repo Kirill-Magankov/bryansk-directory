@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        {% for message in messages %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        {% endwith %}
+        <form method="post">
+            {{ form.hidden_tag() }}
+            <img class="mb-3" src="/static/images/robot.png" alt="" width="70">
+            <h1 class="h3 mb-3 fw-normal">Пожалуйста авторизуйтесь</h1>
+            <div class="form-floating mb-3">
+                <label for="floatingInput">Имя пользователя</label>
+                {{ form.username(class="form-control",required=True,placeholder="example_user_01") }}
+            </div>
+            <div class="form-floating mb-3">
+                <label for="floatingPassword">Пароль</label>
+                {{ form.password(class="form-control",required=True,placeholder="········") }}
+            </div>
+            <div class="checkbox mb-3">
+                {{ form.remember_me(id="remember_me") }}
+                <label for="remember_me" class="form-check-label">Запомнить меня</label>
+            </div>
+            {{ form.submit(class="w-100 btn btn-lg btn-primary",required=True) }}
+        </form>
+    </div>
+{% endblock %}
