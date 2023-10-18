@@ -8,5 +8,9 @@ class UserModel(db.Model):
     username = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(72), nullable=False)
 
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+
     def __repr__(self):
         return '<User %s>' % self.username

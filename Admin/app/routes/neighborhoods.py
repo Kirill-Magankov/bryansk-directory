@@ -26,11 +26,11 @@ district_test = [
 
 @app.route('/neighborhoods')
 def neighborhoods_list():
-    acces_token = request.cookies.get('access_token')
-    if not acces_token:
+    access_token = request.cookies.get('access_token')
+    if not access_token:
         return redirect(url_for('.login'))
-    api_url = "http://localhost:5000/api/v1/places/neighborhood"
-    headers = {'Authorization': 'Bearer %s' % acces_token}
+    api_url = "http://localhost:8000/api/v1/places/neighborhood"
+    headers = {'Authorization': 'Bearer %s' % access_token}
     response = requests.get(api_url, headers=headers)
     return render_template('neighborhoods.html', menu=menu, title='Список типов мест',
                            neighborhoods_list=response.json()['data'])
@@ -39,16 +39,16 @@ def neighborhoods_list():
 @app.route('/neighborhood_add', methods=["GET", "POST"])
 def neighborhood_add():
     form = neighForm(request.form, crsf=True)
-    acces_token = request.cookies.get('access_token')
-    if not acces_token:
+    access_token = request.cookies.get('access_token')
+    if not access_token:
         return redirect(url_for('.login'))
     if form.validate_on_submit():
         name = form.name.data
-        api_url = "http://localhost:5000/api/v1/places/neighborhood"
+        api_url = "http://localhost:8000/api/v1/places/neighborhood"
         data = {
             "name": name
         }
-        headers = {'Authorization': 'Bearer %s' % acces_token}
+        headers = {'Authorization': 'Bearer %s' % access_token}
         response = requests.post(api_url, headers=headers, json=data)
         if response.status_code == 200:
             return render_template("neighborhoods.html", title="Список районов", menu=menu)
@@ -59,12 +59,12 @@ def neighborhood_add():
 
 @app.route('/neighborhood_edit/<neighborhood_id>', methods=["GET", "POST"])
 def edit_neighborhood(neighborhood_id):
-    acces_token = request.cookies.get('access_token')
-    if not acces_token:
+    access_token = request.cookies.get('access_token')
+    if not access_token:
         return redirect(url_for('.login'))
-    api_url = "http://localhost:5000/api/v1/places/neighborhood/"
+    api_url = "http://localhost:8000/api/v1/places/neighborhood/"
 
-    headers = {'Authorization': 'Bearer %s' % acces_token}
+    headers = {'Authorization': 'Bearer %s' % access_token}
     form = neighForm(request.form, crsf=True)
     if request.method == "GET":
         cur_neigh = requests.get(api_url + neighborhood_id, headers=headers)
@@ -88,11 +88,11 @@ def edit_neighborhood(neighborhood_id):
 
 @app.route('/neighborhood_delete/<neighborhood_id>', methods=["GET", "DELETE"])
 def delete_neighborhood(neighborhood_id):
-    acces_token = request.cookies.get('access_token')
-    if not acces_token:
+    access_token = request.cookies.get('access_token')
+    if not access_token:
         return redirect(url_for('.login'))
-    api_url = "http://localhost:5000/api/v1/places/neighborhood/"
-    headers = {'Authorization': 'Bearer %s' % acces_token}
+    api_url = "http://localhost:8000/api/v1/places/neighborhood/"
+    headers = {'Authorization': 'Bearer %s' % access_token}
     response = requests.delete(api_url + neighborhood_id, headers=headers)
     if response.status_code == 200:
         return redirect(url_for('.neighborhoods_list'))

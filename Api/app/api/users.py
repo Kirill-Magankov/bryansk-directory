@@ -5,9 +5,10 @@ from flask_restx import Namespace, Resource, fields
 
 from app.api.model.schemas import UserSchema
 from app.api.model.user import UserModel
+from app.db import db
 from app.utils import messages
 from app.utils.blocklist import BLOCKLIST
-from app.utils.security_utils import password_hash_compare
+from app.utils.security_utils import password_hash_compare, password_hash_generate
 
 api = Namespace('Users')
 
@@ -27,12 +28,56 @@ login_fields = api.model('Login', {
 # endregion
 
 @api.route('')
+@api.doc(security='Bearer')
 class Users(Resource):
+    @jwt_required()
     def get(self):
         users = UserModel.query.all()
         if not users: return messages.ErrorMessage.entry_not_exist('User')
         return {'count': len(users),
                 'data': UserSchema(many=True).dump(users)}
+
+    @jwt_required()
+    @api.expect(user_model, validate=True)
+    def post(self):
+        data = api.payload
+
+        try:
+            password = password_hash_generate(data.get('password'))
+            user = UserModel(data.get('username'), password)
+            db.session.add(user)
+            db.session.commit()
+            return {'message': 'User successfully added',
+                    'data': UserSchema().dump(user)}
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
+
+@api.route('/<int:user_id>')
+@api.doc(security='Bearer')
+class UserById(Resource):
+    @jwt_required()
+    def get(self, user_id):
+        user = UserModel.query.get(user_id)
+        if not user: return messages.ErrorMessage.user_not_exist()
+
+        return {'data': UserSchema().dump(user)}
+
+    @jwt_required()
+    @api.expect(user_model, validate=True)
+    def put(self, user_id):
+        user = UserModel.query.get(user_id)
+        if not user: return messages.ErrorMessage.user_not_exist()
+
+        data = api.payload
+        user.username = data.get('username')
+        user.password = password_hash_generate(data.get('password'))
+        try:
+            db.session.commit()
+            return {'message': 'User successfully updated',
+                    'data': UserSchema().dump(user)}
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
 
 
 @api.route('/login')

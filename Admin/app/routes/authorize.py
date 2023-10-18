@@ -7,16 +7,17 @@ from app.forms import authorize
 from app.forms.authorize import authorizeForm
 
 
-@app.route('/')
-@app.route('/login')
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     authForm = authorizeForm(request.form, crsf=False)
-    if authForm.validate_on_submit():
+
+    if request.method == 'POST' and authForm.validate_on_submit():
         username = authForm.username.data
         password = authForm.password.data
         remember_me = authForm.remember_me.data
 
-        api_url = "http://localhost/api/v1/users/login"
+        api_url = "http://127.0.0.1:8000/api/v1/users/login"
 
         data = {
             "username": username,

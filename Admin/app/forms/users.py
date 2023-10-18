@@ -7,9 +7,9 @@ class userForm(form):
     username = StringField('username', validators=[DataRequired(message='Обязательное поле'), Length(min=4, max=50)])
     password = PasswordField('password',
                              validators=[DataRequired(message='Обязательное поле'), Length(min=4, max=50)])
-    password_repeat = PasswordField('password',
+    password_repeat = PasswordField('password_repeat',
                                     validators=[DataRequired(message='Обязательное поле'), Length(min=4, max=50)])
     submit = SubmitField('Сохранить')
 
-    def __init__(self, *args, **kwargs):
-        super(userForm, self).__init__(*args, **kwargs)
+    def init(self, *args, **kwargs):
+        super(userForm, self).init(*args, **kwargs)
