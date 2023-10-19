@@ -2,6 +2,7 @@ import io
 from datetime import datetime
 
 from flask import send_file, url_for
+from flask_jwt_extended import jwt_required
 from flask_restx import Namespace, Resource, reqparse, fields
 from werkzeug.datastructures import FileStorage
 
@@ -65,15 +66,13 @@ place_model = api.model('Place', {
 
 def get_model_data(model, payload, field_name):
     model_data = model.query
-    if id_ := payload.get('id'):
-        model_data.get(id_)
-    else:
-        model = model_data.filter(getattr(model, field_name) == payload.get(field_name)).first()
+    model = model_data.filter(getattr(model, field_name) == payload.get(field_name)).first()
 
     # foreach for payloads keys and create the class with attributes?
     return model
 
 
+# region Places
 @api.route('')
 class PlacesList(Resource):
     @api.expect(place_parser, validate=True)
@@ -102,6 +101,8 @@ class PlacesList(Resource):
         return {'count': len(places),
                 'data': PlaceSchema(many=True).dump(places)}
 
+    @jwt_required()
+    @api.doc(security='Bearer')
     @api.expect(place_model, validate=True)
     def post(self):
         data = api.payload
@@ -119,9 +120,11 @@ class PlacesList(Resource):
             )
 
             place_type_payload = data.get('place_type')
+            # noinspection PyTypeChecker
             place_type_data = get_model_data(PlaceTypeModel, place_type_payload, 'type_name')
 
             place_neighborhood_payload = data.get('neighborhood')
+            # noinspection PyTypeChecker
             place_neighborhood_data = get_model_data(NeighborhoodModel, place_neighborhood_payload, 'name')
 
             if not place_type_data:
@@ -148,66 +151,229 @@ class PlaceById(Resource):
     def get(self, place_id):
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
-
         return {'data': PlaceSchema().dump(place)}
 
+    @jwt_required()
+    @api.doc(security='Bearer')
     @api.expect(place_model, validate=True)
     def put(self, place_id):
-        return {'message': 'success'}
-
-
-@api.route('/<int:place_id>/reviews')
-class PlaceReviewList(Resource):
-    def get(self, place_id):
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
-        return {'data': PlaceReviewSchema(many=True).dump(place.reviews)}
 
-    @api.expect(review_model, validate=True)
-    def post(self, place_id):
         data = api.payload
-        place = PlaceModel.query.get(place_id)
-        if not place: return messages.ErrorMessage.entry_not_exist('Place')
-
-        review_data = PlaceReviewModel(date=data.get('date'),
-                                       author_name=data.get('author_name'),
-                                       description=data.get('description'),
-                                       url=data.get('url'),
-                                       grade=data.get('grade'))
-
         try:
-            place.reviews.append(review_data)
+            place.name = data.get('name')
+            place.address = data.get('address')
+            place.description = data.get('description')
+            place.phone_number = data.get('phone_number')
+            place.grade = data.get('grade')
+
+            place_type_payload = data.get('place_type')
+            # noinspection PyTypeChecker
+            place_type_data = get_model_data(PlaceTypeModel, place_type_payload, 'type_name')
+
+            place_neighborhood_payload = data.get('neighborhood')
+            # noinspection PyTypeChecker
+            place_neighborhood_data = get_model_data(NeighborhoodModel, place_neighborhood_payload, 'name')
+
+            if not place_type_data:
+                place_type_data = PlaceTypeModel(type_name=place_type_payload.get('type_name'),
+                                                 description=place_type_payload.get('description'))
+
+            if not place_neighborhood_data:
+                place_neighborhood_data = NeighborhoodModel(name=place_neighborhood_payload.get('name'))
+
+            place.place_type = place_type_data
+            place.neighborhood = place_neighborhood_data
+
             db.session.commit()
-            return {'message': 'Place review successfully added',
-                    'data': PlaceReviewSchema().dump(review_data)}
+            return {'message': 'Place successfully updated',
+                    'data': PlaceSchema().dump(place)}
+
         except Exception as e:
             return messages.ErrorMessage.unexpected_error(e)
 
 
-@api.route('/reviews/<int:review_id>')
-class PlaceReviewById(Resource):
-    def delete(self, review_id):
-        review_data = PlaceReviewModel.query.get(review_id)
-        if not review_data: return messages.ErrorMessage.entry_not_exist('Place review')
+@jwt_required()
+@api.doc(security='Bearer')
+def delete(self, place_id):
+    place = PlaceModel.query.get(place_id)
+    if not place: return messages.ErrorMessage.entry_not_exist('Place')
+
+    try:
+        db.session.delete(place)
+        db.session.commit()
+        return messages.InfoMessage.entry_delete('Place')
+    except Exception as e:
+        return messages.ErrorMessage.unexpected_error(e)
+
+
+# endregion
+
+# region Types
+@api.route('/types')
+class PlacesTypeList(Resource):
+    def get(self):
+        place_types = PlaceTypeModel.query.all()
+        if not place_types: return messages.ErrorMessage.entry_not_exist('Place type')
+        return {'count': len(place_types),
+                'data': PlaceTypeSchema(many=True).dump(place_types)}
+
+    @jwt_required()
+    @api.doc(security='Bearer')
+    @api.expect(place_type_model, validate=True)
+    def post(self):
+        data = api.payload
+        place_type = PlaceTypeModel(type_name=data.get('type_name'),
+                                    description=data.get('description'))
 
         try:
-            db.session.delete(review_data)
+            db.session.add(place_type)
             db.session.commit()
-            return messages.InfoMessage.entry_delete('Place review')
+            return {'message': 'Place type successfully added',
+                    'data': PlaceTypeSchema().dump(place_type)}
         except Exception as e:
             return messages.ErrorMessage.unexpected_error(e)
 
 
+@api.route('/types/<int:place_type_id>')
+@api.doc(security='Bearer')
+class PlaceTypeById(Resource):
+    @jwt_required()
+    def get(self, place_type_id):
+        place_type = PlaceTypeModel.query.get(place_type_id)
+        if not place_type: return messages.ErrorMessage.entry_not_exist('Place type')
+
+        return {'data': PlaceTypeSchema().dump(place_type)}
+
+    @jwt_required()
+    @api.expect(place_type_model, validate=True)
+    def put(self, place_type_id):
+        data = api.payload
+        place_type_data = PlaceTypeModel.query.get(place_type_id)
+        if not place_type_data: return messages.ErrorMessage.entry_not_exist('Place type')
+        place_type_data.type_name = data.get('type_name', place_type_data.type_name)
+        place_type_data.description = data.get('description', place_type_data.description)
+
+        try:
+            db.session.commit()
+            return {'message': 'Place type successfully updated',
+                    'data': PlaceTypeSchema().dump(place_type_data)}
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
+    @jwt_required()
+    def delete(self, place_type_id):
+        place_type = PlaceTypeModel.query.get(place_type_id)
+        if not place_type: return messages.ErrorMessage.entry_not_exist('Place type')
+
+        try:
+            db.session.delete(place_type)
+            db.session.commit()
+            return messages.InfoMessage.entry_delete('Place type')
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
+
+# endregion
+
+# region Neighborhood
+@api.route('/neighborhood')
+class NeighborhoodsList(Resource):
+    def get(self):
+        neighborhoods = NeighborhoodModel.query.all()
+        if not neighborhoods: return messages.ErrorMessage.entry_not_exist('Neighborhood')
+        return {'count': len(neighborhoods),
+                'data': NeighborhoodSchema(many=True).dump(neighborhoods)}
+
+    @jwt_required()
+    @api.doc(security='Bearer')
+    @api.expect(neighborhood_model, validate=True)
+    def post(self):
+        data = api.payload
+        neighborhood = NeighborhoodModel(name=data.get('name', 'undefined'))
+
+        try:
+            db.session.add(neighborhood)
+            db.session.commit()
+            return {'message': 'Neighborhood successfully added',
+                    'data': NeighborhoodSchema().dump(neighborhood)}
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
+
+@api.route('/neighborhood/<int:neighborhood_id>')
+@api.doc(security='Bearer')
+class NeighborhoodById(Resource):
+    @jwt_required()
+    def get(self, neighborhood_id):
+        neighborhood = NeighborhoodModel.query.get(neighborhood_id)
+        if not neighborhood: return messages.ErrorMessage.entry_not_exist('Neighborhood')
+
+        return {'data': NeighborhoodSchema().dump(neighborhood)}
+
+    @jwt_required()
+    @api.expect(neighborhood_model, validate=True)
+    def put(self, neighborhood_id):
+        data = api.payload
+        neighborhood = NeighborhoodModel.query.get(neighborhood_id)
+        if not neighborhood: return messages.ErrorMessage.entry_not_exist('Neighborhood')
+        neighborhood.name = data.get('name', neighborhood.name)
+        try:
+            db.session.commit()
+            return {'message': 'Neighborhood successfully updated',
+                    'data': NeighborhoodSchema().dump(neighborhood)}
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
+    @jwt_required()
+    def delete(self, neighborhood_id):
+        neighborhood = NeighborhoodModel.query.get(neighborhood_id)
+        if not neighborhood: return messages.ErrorMessage.entry_not_exist('Neighborhood')
+
+        try:
+            db.session.delete(neighborhood)
+            db.session.commit()
+            return messages.InfoMessage.entry_delete('Neighborhood')
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
+
+# endregion
+
+# region Images
 @api.route('/<int:place_id>/images')
-class PlaceImageById(Resource):
+class PlaceImageByPlaceId(Resource):
     def get(self, place_id):
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
         return {'data': PlaceImageSchema(many=True).dump(place.images)}
 
 
+@api.route('/images/<string:uuid>')
+class PlaceImageByUuid(Resource):
+    def get(self, uuid):
+        place_image = PlaceImageModel.query.filter(PlaceImageModel.uuid == uuid).first()
+        if not place_image: return messages.ErrorMessage.entry_not_exist('Image')
+        return send_file(io.BytesIO(place_image.image), mimetype='image/jpeg')
+
+    @jwt_required()
+    @api.doc(security='Bearer')
+    def delete(self, uuid):
+        place_image = PlaceImageModel.query.filter(PlaceImageModel.uuid == uuid).first()
+        if not place_image: return messages.ErrorMessage.entry_not_exist('Image')
+        try:
+            db.session.delete(place_image)
+            db.session.commit()
+            return messages.InfoMessage.entry_delete('Image')
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
+
 @api.route('/<int:place_id>/uploadImage')
 class PlaceUploadImage(Resource):
+    @jwt_required()
+    @api.doc(security='Bearer')
     @api.expect(upload_parser, validate=True)
     def post(self, place_id):
         parser_args = upload_parser.parse_args()
@@ -230,132 +396,52 @@ class PlaceUploadImage(Resource):
             return messages.ErrorMessage.unexpected_error(e)
 
 
-@api.route('/neighborhood')
-class NeighborhoodsList(Resource):
-    def get(self):
-        neighborhoods = NeighborhoodModel.query.all()
-        if not neighborhoods: return messages.ErrorMessage.entry_not_exist('Neighborhood')
-        return {'count': len(neighborhoods),
-                'data': NeighborhoodSchema(many=True).dump(neighborhoods)}
+# endregion
 
-    @api.expect(neighborhood_model, validate=True)
-    def post(self):
+# region Review
+@api.route('/<int:place_id>/reviews')
+class PlaceReviewList(Resource):
+    def get(self, place_id):
+        place = PlaceModel.query.get(place_id)
+        if not place: return messages.ErrorMessage.entry_not_exist('Place')
+        return {'data': PlaceReviewSchema(many=True).dump(place.reviews)}
+
+    @jwt_required()
+    @api.doc(security='Bearer')
+    @api.expect(review_model, validate=True)
+    def post(self, place_id):
         data = api.payload
-        neighborhood = NeighborhoodModel(name=data.get('name', 'undefined'))
+        place = PlaceModel.query.get(place_id)
+        if not place: return messages.ErrorMessage.entry_not_exist('Place')
+
+        review_data = PlaceReviewModel(date=data.get('date'),
+                                       author_name=data.get('author_name'),
+                                       description=data.get('description'),
+                                       url=data.get('url'),
+                                       grade=data.get('grade'))
 
         try:
-            db.session.add(neighborhood)
+            place.reviews.append(review_data)
             db.session.commit()
-            return {'message': 'Neighborhood successfully added',
-                    'data': NeighborhoodSchema().dump(neighborhood)}
+            return {'message': 'Place review successfully added',
+                    'data': PlaceReviewSchema().dump(review_data)}
         except Exception as e:
             return messages.ErrorMessage.unexpected_error(e)
 
 
-@api.route('/neighborhood/<int:neighborhood_id>')
-class NeighborhoodById(Resource):
-    def get(self, neighborhood_id):
-        neighborhood = NeighborhoodModel.query.get(neighborhood_id)
-        if not neighborhood: return messages.ErrorMessage.entry_not_exist('Neighborhood')
+@api.route('/reviews/<int:review_id>')
+@api.doc(security='Bearer')
+class PlaceReviewById(Resource):
+    @jwt_required()
+    def delete(self, review_id):
+        review_data = PlaceReviewModel.query.get(review_id)
+        if not review_data: return messages.ErrorMessage.entry_not_exist('Place review')
 
-        return {'data': NeighborhoodSchema().dump(neighborhood)}
-
-    @api.expect(neighborhood_model, validate=True)
-    def put(self, neighborhood_id):
-        data = api.payload
-        neighborhood = NeighborhoodModel.query.get(neighborhood_id)
-        if not neighborhood: return messages.ErrorMessage.entry_not_exist('Neighborhood')
-        neighborhood.name = data.get('name', neighborhood.name)
         try:
+            db.session.delete(review_data)
             db.session.commit()
-            return {'message': 'Neighborhood successfully updated',
-                    'data': NeighborhoodSchema().dump(neighborhood)}
+            return messages.InfoMessage.entry_delete('Place review')
         except Exception as e:
             return messages.ErrorMessage.unexpected_error(e)
 
-    def delete(self, neighborhood_id):
-        neighborhood = NeighborhoodModel.query.get(neighborhood_id)
-        if not neighborhood: return messages.ErrorMessage.entry_not_exist('Neighborhood')
-
-        try:
-            db.session.delete(neighborhood)
-            db.session.commit()
-            return messages.InfoMessage.entry_delete('Neighborhood')
-        except Exception as e:
-            return messages.ErrorMessage.unexpected_error(e)
-
-
-@api.route('/types')
-class PlacesTypeList(Resource):
-    def get(self):
-        place_types = PlaceTypeModel.query.all()
-        if not place_types: return messages.ErrorMessage.entry_not_exist('Place type')
-        return {'count': len(place_types),
-                'data': PlaceTypeSchema(many=True).dump(place_types)}
-
-    @api.expect(place_type_model, validate=True)
-    def post(self):
-        data = api.payload
-        place_type = PlaceTypeModel(type_name=data.get('type_name'),
-                                    description=data.get('description'))
-
-        try:
-            db.session.add(place_type)
-            db.session.commit()
-            return {'message': 'Place type successfully added',
-                    'data': PlaceTypeSchema().dump(place_type)}
-        except Exception as e:
-            return messages.ErrorMessage.unexpected_error(e)
-
-
-@api.route('/types/<int:place_type_id>')
-class PlaceTypeById(Resource):
-    def get(self, place_type_id):
-        place_type = PlaceTypeModel.query.get(place_type_id)
-        if not place_type: return messages.ErrorMessage.entry_not_exist('Place type')
-
-        return {'data': PlaceTypeSchema().dump(place_type)}
-
-    @api.expect(place_type_model, validate=True)
-    def put(self, place_type_id):
-        data = api.payload
-        place_type_data = PlaceTypeModel.query.get(place_type_id)
-        if not place_type_data: return messages.ErrorMessage.entry_not_exist('Place type')
-        place_type_data.type_name = data.get('type_name', place_type_data.type_name)
-        place_type_data.description = data.get('description', place_type_data.description)
-
-        try:
-            db.session.commit()
-            return {'message': 'Place type successfully updated',
-                    'data': PlaceTypeSchema().dump(place_type_data)}
-        except Exception as e:
-            return messages.ErrorMessage.unexpected_error(e)
-
-    def delete(self, place_type_id):
-        place_type = PlaceTypeModel.query.get(place_type_id)
-        if not place_type: return messages.ErrorMessage.entry_not_exist('Place type')
-
-        try:
-            db.session.delete(place_type)
-            db.session.commit()
-            return messages.InfoMessage.entry_delete('Place type')
-        except Exception as e:
-            return messages.ErrorMessage.unexpected_error(e)
-
-
-@api.route('/images/<string:uuid>')
-class PlaceImageByUuid(Resource):
-    def get(self, uuid):
-        place_image = PlaceImageModel.query.filter(PlaceImageModel.uuid == uuid).first()
-        if not place_image: return messages.ErrorMessage.entry_not_exist('Image')
-        return send_file(io.BytesIO(place_image.image), mimetype='image/jpeg')
-
-    def delete(self, uuid):
-        place_image = PlaceImageModel.query.filter(PlaceImageModel.uuid == uuid).first()
-        if not place_image: return messages.ErrorMessage.entry_not_exist('Image')
-        try:
-            db.session.delete(place_image)
-            db.session.commit()
-            return messages.InfoMessage.entry_delete('Image')
-        except Exception as e:
-            return messages.ErrorMessage.unexpected_error(e)
+# endregion
