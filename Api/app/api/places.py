@@ -21,8 +21,8 @@ api = Namespace('Places', 'Справочник доступных мест и �
 place_parser = reqparse.RequestParser()
 place_parser.add_argument('neighborhood', help='Фильтрация по району')
 place_parser.add_argument('type', help='Тип места')
-place_parser.add_argument('sort', help='Сортировка по параметру', default='grade')
 place_parser.add_argument('order', choices=['asc', 'desc'], default='desc')
+# place_parser.add_argument('sort', help='Сортировка по параметру', default='grade')
 
 # region Swagger models
 upload_parser = reqparse.RequestParser()
@@ -91,11 +91,16 @@ class PlacesList(Resource):
         if neighborhood: places = places.join(NeighborhoodModel).filter(NeighborhoodModel.name == neighborhood)
         if place_type: places = places.join(PlaceTypeModel).filter(PlaceTypeModel.type_name == place_type)
 
-        if sort_by and hasattr(PlaceModel, sort_by):
-            if place_order_by == 'asc':
-                places = places.order_by(getattr(PlaceModel, sort_by).asc())
-            else:
-                places = places.order_by(getattr(PlaceModel, sort_by).desc())
+        # # Sort and order
+        # if sort_by and hasattr(PlaceModel, sort_by):
+        #     if place_order_by == 'asc':
+        #         places = places.order_by(getattr(PlaceModel, sort_by).asc())
+        #     else:
+        #         places = places.order_by(getattr(PlaceModel, sort_by).desc())
+
+        places = places.order_by(PlaceModel.grade.asc()) \
+            if place_order_by == 'asc' \
+            else places.order_by(PlaceModel.grade.desc())
 
         places = places.all()
         if not places: return messages.ErrorMessage.entry_not_exist('Place')
