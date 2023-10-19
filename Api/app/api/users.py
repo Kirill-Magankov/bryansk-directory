@@ -10,7 +10,7 @@ from app.utils import messages
 from app.utils.blocklist import BLOCKLIST
 from app.utils.security_utils import password_hash_compare, password_hash_generate
 
-api = Namespace('Users')
+api = Namespace('Users', 'Пользователи системы')
 
 # region Swagger model schema
 user_model = api.model('User', {
@@ -32,14 +32,16 @@ login_fields = api.model('Login', {
 class Users(Resource):
     @jwt_required()
     def get(self):
+        """Получение доступных пользователей"""
         users = UserModel.query.all()
         if not users: return messages.ErrorMessage.entry_not_exist('User')
-        return {'count': len(users),
+        return {'total': len(users),
                 'data': UserSchema(many=True).dump(users)}
 
     @jwt_required()
     @api.expect(user_model, validate=True)
     def post(self):
+        """Добавление пользователя"""
         data = api.payload
 
         try:
@@ -58,6 +60,7 @@ class Users(Resource):
 class UserById(Resource):
     @jwt_required()
     def get(self, user_id):
+        """Получение пользователя по идентификатору"""
         user = UserModel.query.get(user_id)
         if not user: return messages.ErrorMessage.user_not_exist()
 
@@ -66,6 +69,7 @@ class UserById(Resource):
     @jwt_required()
     @api.expect(user_model, validate=True)
     def put(self, user_id):
+        """Обновление информации о пользователе"""
         user = UserModel.query.get(user_id)
         if not user: return messages.ErrorMessage.user_not_exist()
 
@@ -84,7 +88,7 @@ class UserById(Resource):
 class UserLoginResource(Resource):
     @api.expect(login_fields, validate=True)
     def post(self):
-        """Login user into the system"""
+        """Авторизация пользователя в системе"""
         data = api.payload
         user = UserModel.query.filter(UserModel.username == data.get('username')).first()
 
@@ -109,7 +113,7 @@ class UserLogout(Resource):
     @api.doc(security='Bearer')
     @jwt_required()
     def post(self):
-        """Logout user from system"""
+        """Выход пользователя из системы"""
         jti = get_jwt()['jti']
         BLOCKLIST.add(jti)
         return messages.InfoMessage.user_logout()

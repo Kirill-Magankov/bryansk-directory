@@ -16,7 +16,7 @@ from app.api.model.schemas import PlaceSchema, NeighborhoodSchema, PlaceTypeSche
 from app.db import db
 from app.utils import messages
 
-api = Namespace('Places')
+api = Namespace('Places', 'Справочник доступных мест и информации связанной с ними')
 
 place_parser = reqparse.RequestParser()
 place_parser.add_argument('neighborhood', help='Фильтрация по району')
@@ -77,6 +77,7 @@ def get_model_data(model, payload, field_name):
 class PlacesList(Resource):
     @api.expect(place_parser, validate=True)
     def get(self):
+        """Список доступных мест"""
         parser_args = place_parser.parse_args()
 
         places = PlaceModel.query
@@ -98,13 +99,14 @@ class PlacesList(Resource):
 
         places = places.all()
         if not places: return messages.ErrorMessage.entry_not_exist('Place')
-        return {'count': len(places),
+        return {'total': len(places),
                 'data': PlaceSchema(many=True).dump(places)}
 
     @jwt_required()
     @api.doc(security='Bearer')
     @api.expect(place_model, validate=True)
     def post(self):
+        """Добавление места"""
         data = api.payload
 
         try:
@@ -149,6 +151,7 @@ class PlacesList(Resource):
 @api.route('/<int:place_id>')
 class PlaceById(Resource):
     def get(self, place_id):
+        """Получение места по идентификатору"""
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
         return {'data': PlaceSchema().dump(place)}
@@ -157,6 +160,7 @@ class PlaceById(Resource):
     @api.doc(security='Bearer')
     @api.expect(place_model, validate=True)
     def put(self, place_id):
+        """Обновление информации о месте"""
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
 
@@ -194,18 +198,29 @@ class PlaceById(Resource):
             return messages.ErrorMessage.unexpected_error(e)
 
 
-@jwt_required()
-@api.doc(security='Bearer')
-def delete(self, place_id):
-    place = PlaceModel.query.get(place_id)
-    if not place: return messages.ErrorMessage.entry_not_exist('Place')
+@api.route('/<string:place_name>')
+class PlaceByNameSearch(Resource):
+    def get(self, place_name):
+        """Поиск места по названию"""
+        places = PlaceModel.query.filter(PlaceModel.name.like(f'%{place_name}%')).all()
+        if not places or len(places) == 0: return messages.InfoMessage.no_data()
 
-    try:
-        db.session.delete(place)
-        db.session.commit()
-        return messages.InfoMessage.entry_delete('Place')
-    except Exception as e:
-        return messages.ErrorMessage.unexpected_error(e)
+        return {'total': len(places),
+                'data': PlaceSchema(many=True).dump(places)}
+
+    @jwt_required()
+    @api.doc(security='Bearer')
+    def delete(self, place_id):
+        """Удаление места"""
+        place = PlaceModel.query.get(place_id)
+        if not place: return messages.ErrorMessage.entry_not_exist('Place')
+
+        try:
+            db.session.delete(place)
+            db.session.commit()
+            return messages.InfoMessage.entry_delete('Place')
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
 
 
 # endregion
@@ -214,15 +229,17 @@ def delete(self, place_id):
 @api.route('/types')
 class PlacesTypeList(Resource):
     def get(self):
+        """Получение категорий (типов) мест"""
         place_types = PlaceTypeModel.query.all()
         if not place_types: return messages.ErrorMessage.entry_not_exist('Place type')
-        return {'count': len(place_types),
+        return {'total': len(place_types),
                 'data': PlaceTypeSchema(many=True).dump(place_types)}
 
     @jwt_required()
     @api.doc(security='Bearer')
     @api.expect(place_type_model, validate=True)
     def post(self):
+        """Добавление новой категории (типа) места"""
         data = api.payload
         place_type = PlaceTypeModel(type_name=data.get('type_name'),
                                     description=data.get('description'))
@@ -241,6 +258,7 @@ class PlacesTypeList(Resource):
 class PlaceTypeById(Resource):
     @jwt_required()
     def get(self, place_type_id):
+        """Получение категории (типа) по идентификатору"""
         place_type = PlaceTypeModel.query.get(place_type_id)
         if not place_type: return messages.ErrorMessage.entry_not_exist('Place type')
 
@@ -249,6 +267,7 @@ class PlaceTypeById(Resource):
     @jwt_required()
     @api.expect(place_type_model, validate=True)
     def put(self, place_type_id):
+        """Обновление информации о категории (типа) места"""
         data = api.payload
         place_type_data = PlaceTypeModel.query.get(place_type_id)
         if not place_type_data: return messages.ErrorMessage.entry_not_exist('Place type')
@@ -264,6 +283,7 @@ class PlaceTypeById(Resource):
 
     @jwt_required()
     def delete(self, place_type_id):
+        """Удаление категории (типа) места"""
         place_type = PlaceTypeModel.query.get(place_type_id)
         if not place_type: return messages.ErrorMessage.entry_not_exist('Place type')
 
@@ -281,15 +301,17 @@ class PlaceTypeById(Resource):
 @api.route('/neighborhood')
 class NeighborhoodsList(Resource):
     def get(self):
+        """Получение доступных районов"""
         neighborhoods = NeighborhoodModel.query.all()
         if not neighborhoods: return messages.ErrorMessage.entry_not_exist('Neighborhood')
-        return {'count': len(neighborhoods),
+        return {'total': len(neighborhoods),
                 'data': NeighborhoodSchema(many=True).dump(neighborhoods)}
 
     @jwt_required()
     @api.doc(security='Bearer')
     @api.expect(neighborhood_model, validate=True)
     def post(self):
+        """Добавление нового района"""
         data = api.payload
         neighborhood = NeighborhoodModel(name=data.get('name', 'undefined'))
 
@@ -307,6 +329,7 @@ class NeighborhoodsList(Resource):
 class NeighborhoodById(Resource):
     @jwt_required()
     def get(self, neighborhood_id):
+        "Получение доступного района по идентификатору"
         neighborhood = NeighborhoodModel.query.get(neighborhood_id)
         if not neighborhood: return messages.ErrorMessage.entry_not_exist('Neighborhood')
 
@@ -315,6 +338,7 @@ class NeighborhoodById(Resource):
     @jwt_required()
     @api.expect(neighborhood_model, validate=True)
     def put(self, neighborhood_id):
+        """Обновление информации о районе"""
         data = api.payload
         neighborhood = NeighborhoodModel.query.get(neighborhood_id)
         if not neighborhood: return messages.ErrorMessage.entry_not_exist('Neighborhood')
@@ -328,6 +352,7 @@ class NeighborhoodById(Resource):
 
     @jwt_required()
     def delete(self, neighborhood_id):
+        """Удаление района"""
         neighborhood = NeighborhoodModel.query.get(neighborhood_id)
         if not neighborhood: return messages.ErrorMessage.entry_not_exist('Neighborhood')
 
@@ -345,6 +370,7 @@ class NeighborhoodById(Resource):
 @api.route('/<int:place_id>/images')
 class PlaceImageByPlaceId(Resource):
     def get(self, place_id):
+        """Получение доступных изображений для места"""
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
         return {'data': PlaceImageSchema(many=True).dump(place.images)}
@@ -353,6 +379,7 @@ class PlaceImageByPlaceId(Resource):
 @api.route('/images/<string:uuid>')
 class PlaceImageByUuid(Resource):
     def get(self, uuid):
+        """Получение изображения по его uuid"""
         place_image = PlaceImageModel.query.filter(PlaceImageModel.uuid == uuid).first()
         if not place_image: return messages.ErrorMessage.entry_not_exist('Image')
         return send_file(io.BytesIO(place_image.image), mimetype='image/jpeg')
@@ -360,6 +387,7 @@ class PlaceImageByUuid(Resource):
     @jwt_required()
     @api.doc(security='Bearer')
     def delete(self, uuid):
+        """Удаление изображения"""
         place_image = PlaceImageModel.query.filter(PlaceImageModel.uuid == uuid).first()
         if not place_image: return messages.ErrorMessage.entry_not_exist('Image')
         try:
@@ -376,6 +404,7 @@ class PlaceUploadImage(Resource):
     @api.doc(security='Bearer')
     @api.expect(upload_parser, validate=True)
     def post(self, place_id):
+        """Добавление изображения для места"""
         parser_args = upload_parser.parse_args()
         file = parser_args.get('file')
         if not file: return messages.ErrorMessage.entry_not_exist('File')
@@ -402,6 +431,7 @@ class PlaceUploadImage(Resource):
 @api.route('/<int:place_id>/reviews')
 class PlaceReviewList(Resource):
     def get(self, place_id):
+        """Получение доступных отзывов о месте"""
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
         return {'data': PlaceReviewSchema(many=True).dump(place.reviews)}
@@ -410,6 +440,7 @@ class PlaceReviewList(Resource):
     @api.doc(security='Bearer')
     @api.expect(review_model, validate=True)
     def post(self, place_id):
+        """Добавление отзыва о месте"""
         data = api.payload
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
@@ -434,6 +465,7 @@ class PlaceReviewList(Resource):
 class PlaceReviewById(Resource):
     @jwt_required()
     def delete(self, review_id):
+        """Удаление отзыва по идентификатору места"""
         review_data = PlaceReviewModel.query.get(review_id)
         if not review_data: return messages.ErrorMessage.entry_not_exist('Place review')
 

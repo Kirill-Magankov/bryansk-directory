@@ -37,8 +37,8 @@ def create_api():
               authorizations=authorizations,
               description=current_app.config.get('API_DESCRIPTION'))
 
-    api.add_namespace(places, '/places')
     api.add_namespace(users, '/users')
+    api.add_namespace(places, '/places')
     api.add_namespace(feedback, '/feedbacks')
 
     return blueprint
