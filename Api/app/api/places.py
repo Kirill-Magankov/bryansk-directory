@@ -18,11 +18,13 @@ from app.utils import messages
 
 api = Namespace('Places', 'Справочник доступных мест и информации связанной с ними')
 
+# region Request place parser
 place_parser = reqparse.RequestParser()
 place_parser.add_argument('neighborhood', help='Фильтрация по району')
 place_parser.add_argument('type', help='Тип места')
 place_parser.add_argument('order', choices=['asc', 'desc'], default='desc')
 # place_parser.add_argument('sort', help='Сортировка по параметру', default='grade')
+# endregion
 
 # region Swagger models
 upload_parser = reqparse.RequestParser()
@@ -103,7 +105,9 @@ class PlacesList(Resource):
             else places.order_by(PlaceModel.grade.desc())
 
         places = places.all()
-        if not places: return messages.ErrorMessage.entry_not_exist('Place')
+        if not places: return messages.ErrorMessage.entry_not_exist('Places')
+        if len(places) == 0: return messages.InfoMessage.no_entry('places')
+
         return {'total': len(places),
                 'data': PlaceSchema(many=True).dump(places)}
 
@@ -208,7 +212,7 @@ class PlaceByNameSearch(Resource):
     def get(self, place_name):
         """Поиск места по названию"""
         places = PlaceModel.query.filter(PlaceModel.name.like(f'%{place_name}%')).all()
-        if not places or len(places) == 0: return messages.InfoMessage.no_data()
+        if not places or len(places) == 0: return messages.InfoMessage.no_entry('place')
 
         return {'total': len(places),
                 'data': PlaceSchema(many=True).dump(places)}
@@ -237,6 +241,8 @@ class PlacesTypeList(Resource):
         """Получение категорий (типов) мест"""
         place_types = PlaceTypeModel.query.all()
         if not place_types: return messages.ErrorMessage.entry_not_exist('Place type')
+        if len(place_types) == 0: return messages.InfoMessage.no_entry('place types')
+
         return {'total': len(place_types),
                 'data': PlaceTypeSchema(many=True).dump(place_types)}
 
@@ -309,6 +315,8 @@ class NeighborhoodsList(Resource):
         """Получение доступных районов"""
         neighborhoods = NeighborhoodModel.query.all()
         if not neighborhoods: return messages.ErrorMessage.entry_not_exist('Neighborhood')
+        if len(neighborhoods) == 0: return messages.InfoMessage.no_entry('neighborhoods')
+
         return {'total': len(neighborhoods),
                 'data': NeighborhoodSchema(many=True).dump(neighborhoods)}
 
@@ -378,6 +386,7 @@ class PlaceImageByPlaceId(Resource):
         """Получение доступных изображений для места"""
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
+        if len(place.images) == 0: return messages.InfoMessage.no_entry('images')
         return {'data': PlaceImageSchema(many=True).dump(place.images)}
 
 
@@ -439,6 +448,7 @@ class PlaceReviewList(Resource):
         """Получение доступных отзывов о месте"""
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
+        if len(place.reviews) == 0: return messages.InfoMessage.no_entry('reviews')
         return {'data': PlaceReviewSchema(many=True).dump(place.reviews)}
 
     @jwt_required()
