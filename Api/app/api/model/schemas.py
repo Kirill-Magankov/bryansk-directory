@@ -22,9 +22,9 @@ class PlaceSchema(ma.SQLAlchemyAutoSchema):
         model = PlaceModel
 
     place_type = ma.Nested('PlaceTypeSchema')
-    place_reviews = ma.Nested('PlaceReviewSchema', many=True)
     images = ma.Nested('PlaceImageSchema', many=True)
     neighborhood = ma.Nested('NeighborhoodSchema')
+    # reviews = ma.Nested('PlaceReviewSchema', many=True)
 
 
 class NeighborhoodSchema(ma.SQLAlchemyAutoSchema):

@@ -31,3 +31,6 @@ class InfoMessage:
 
     @staticmethod
     def no_data(): return {'message': 'No data to display'}, 200
+
+    @staticmethod
+    def no_entry(entry): return {'message': 'No %s to display' % entry}, 200

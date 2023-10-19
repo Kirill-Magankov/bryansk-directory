@@ -10,7 +10,7 @@ class PlaceReviewModel(db.Model):
     place_id = db.Column(db.Integer, db.ForeignKey('places.id', ondelete='CASCADE'), nullable=False)
     date = db.Column(db.Date, nullable=False, default=datetime.now(), onupdate=datetime.now())
     author_name = db.Column(db.String(255))
-    description = db.Column(db.String(255))
+    description = db.Column(db.Text)
     url = db.Column(db.String(255))
     grade = db.Column(db.Integer, nullable=False)
 
