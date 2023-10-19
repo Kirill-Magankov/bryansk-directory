@@ -5,13 +5,13 @@ from wtforms.widgets import TextArea
 
 
 class filterForm(form):
-    search = StringField('search')
     neighborhood = SelectField()
     place_type = SelectField()
-    sort = SelectField(choices=[("ASC", "По возрастанию"), ("DESC", "По убыванию")])
     submit = SubmitField('Поиск')
+
     def __init__(self, *args, **kwargs):
         super(filterForm, self).__init__(*args, **kwargs)
+
 
 class placeForm(form):
     name = StringField('name', validators=[DataRequired(message='Обязательное поле'), Length(min=4, max=100)])

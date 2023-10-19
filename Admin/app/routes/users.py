@@ -13,7 +13,10 @@ def users_list():
         return redirect(url_for('.login'))
     api_url = "http://localhost:8000/api/v1/users"
     headers = {'Authorization': 'Bearer %s' % acces_token}
-    response = requests.get(api_url, headers=headers)
+    try:
+        response = requests.get(api_url, headers=headers).json()['data']
+    except KeyError:
+        response = {}
     return render_template('users.html', menu=menu, title='Список пользователей', user_list=response.json()['data'])
 
 

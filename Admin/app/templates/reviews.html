@@ -13,14 +13,40 @@
             </tr>
             {% for item in reviews_list %}
                 <tr>
-                    <td>{{ item['id'] }}</td>
-                    <td style="width: 200px">{{ item['date'] }}</td>
-                    <td>{{ item['author_name'] }}</td>
-                    <td>{{ item['description'] }}</td>
-                    <td>{{ item['url'] }}</td>
-                    <td>{{ item['grade'] }}</td>
-                    <td><a href="{{ url_for('.delete_user',user_id=item['id']) }}"><i class="fa fa-trash"
-                                                                                      aria-hidden="true"></i></a></td>
+                    {% if item['id'] != None %}
+                        <td>{{ item['id'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['date'] != None %}
+                        <td style="width: 200px;">{{ item['date'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['author_name'] != None %}
+                        <td>{{ item['author_name'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['description'] != None %}
+                        <td>{{ item['description'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['url'] != None %}
+                        <td>{{ item['url'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['grade'] != None %}
+                        <td>{{ item['grade'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    <td><a href="{{ url_for('.delete_user',user_id=item['id']) }}"><span
+                            class="material-symbols-outlined">
+delete
+</span></a></td>
 
                 </tr>
             {% endfor %}

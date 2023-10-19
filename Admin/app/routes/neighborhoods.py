@@ -14,13 +14,12 @@ def neighborhoods_list():
         return redirect(url_for('.login'))
     api_url = "http://localhost:8000/api/v1/places/neighborhood"
     headers = {'Authorization': 'Bearer %s' % acces_token}
-    response = requests.get(api_url, headers=headers)
-    if not response:
+    try:
+        response = requests.get(api_url, headers=headers).json()['data']
+    except KeyError:
         response = {}
-        return render_template('neighborhoods.html', menu=menu, title='Список типов мест',
-                               neighborhoods_list=response)
     return render_template('neighborhoods.html', menu=menu, title='Список типов мест',
-                           neighborhoods_list=response.json()['data'])
+                           neighborhoods_list=response)
 
 
 

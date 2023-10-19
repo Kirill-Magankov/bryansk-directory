@@ -1,48 +1,92 @@
+from urllib.parse import urlencode
+
 import requests
 from flask import render_template, request, redirect, url_for
+from flask_paginate import get_page_parameter, Pagination
 
 from app import app
 from app.constant import menu
 from app.forms.places import placeForm, filterForm
 
 
+def paginate_data(data, page, per_page):
+    total = len(data)
+    start = (page - 1) * per_page
+    end = start + per_page
+    total_pages = -(-total // per_page)  # округление вверх
+    return data[start:end], total_pages
+
+
 @app.route('/places', methods=["GET", "POST"])
 def places_list():
-    acces_token = request.cookies.get('access_token')
-    if not acces_token:
-        return redirect(url_for('.login'))
+    access_token = request.cookies.get('access_token')
+    if not access_token:
+        return redirect(url_for('login'))
+
     api_url = "http://localhost:8000/api/v1/places"
-    headers = {'Authorization': 'Bearer %s' % acces_token}
+    headers = {'Authorization': f'Bearer {access_token}'}
     filter_url = "http://localhost:8000/api/v1/places/types"
     neigh_url = "http://localhost:8000/api/v1/places/neighborhood"
+
     neighborhoods = requests.get(neigh_url, headers=headers)
     types = requests.get(filter_url, headers=headers)
-    res_neighs = neighborhoods.json()['data']
-    res_types = types.json()['data']
-    if not res_types and not res_neighs:
-        return redirect(url_for('places_list'))
-    names_neighs = []
-    names_types = []
-    for item in res_neighs:
-        names_neighs.append(item['name'])
-    for item in res_types:
-        names_types.append(item['type_name'])
+
+    try:
+        res_neighs = neighborhoods.json()['data']
+        res_types = types.json()['data']
+    except KeyError:
+        res_neighs = []
+        res_types = []
+
+    names_neighs = [item['name'] for item in res_neighs]
+    names_types = [item['type_name'] for item in res_types]
+
     form = filterForm(request.form, crsf=True)
+
+    form.neighborhood.choices = [('', 'По району')] + [(item, item) for item in names_neighs]
+    form.place_type.choices = [('', 'По типу места')] + [(item, item) for item in names_types]
+
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+
     if request.method == "GET":
-        form.neighborhood.choices = names_neighs
-        form.place_type.choices = names_types
-        response = requests.get(api_url, headers=headers)
-        return render_template('places.html', menu=menu, title='Список мест', places_list=response.json()['data'],
-                               form=form)
+        params = {'page': page, 'per_page': per_page}
+        response = requests.get(api_url, headers=headers, params=params)
+        try:
+            places_data = response.json()['data']
+        except KeyError:
+            places_data = []
+        paginated_data, total_pages = paginate_data(places_data, page, per_page)
+
+        pagination = Pagination(page=page, total=total_pages, per_page=per_page, record_name='places_data',
+                                css_framework='bootstrap4')
+
+        return render_template('places.html', menu=menu, title='Список мест', places_list=paginated_data, form=form,
+                               pagination=pagination)
+
     elif request.method == "POST":
-        type = form.place_type.data
-        neigh = form.neighborhood.data
-        sort = form.sort.data
-        response = requests.get(api_url + "?neighborhood=" + neigh + "&type=" + type + "&sort=" + sort)
-        form.neighborhood.choices = names_neighs
-        form.place_type.choices = names_types
-        return render_template('places.html', menu=menu, title='Список мест', places_list=response.json()['data'],
-                               form=form)
+        params = {'page': page, 'per_page': per_page}
+
+        if form.place_type.data:
+            params['type'] = form.place_type.data
+
+        if form.neighborhood.data:
+            params['neighborhood'] = form.neighborhood.data
+
+        if form.sort.data:
+            params['sort'] = form.sort.data
+
+        response = requests.get(api_url, headers=headers, params=params)
+        try:
+            places_data = response.json()['data']
+        except KeyError:
+            places_data = []
+
+        form.neighborhood.data = request.form.get('neighborhood')
+        form.place_type.data = request.form.get('place_type')
+        form.sort.data = request.form.get('sort')
+
+        return render_template('places.html', menu=menu, title='Список мест', places_list=places_data, form=form)
 
 
 @app.route('/place_add', methods=["GET", "POST"])
@@ -80,7 +124,7 @@ def place_add():
             },
             "name": form.name.data,
             "address": form.address.data,
-            "description": form.address.data,
+            "description": form.description.data,
             "phone_number": form.phone.data,
             "grade": form.grade.data
         }
@@ -135,7 +179,7 @@ def place_edit(place_id):
             },
             "name": form.name.data,
             "address": form.address.data,
-            "description": form.address.data,
+            "description": form.description.data,
             "phone_number": form.phone.data,
             "grade": form.grade.data
         }

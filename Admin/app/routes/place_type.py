@@ -14,13 +14,12 @@ def place_types_list():
         return redirect(url_for('.login'))
     api_url = "http://localhost:8000/api/v1/places/types"
     headers = {'Authorization': 'Bearer %s' % acces_token}
-    response = requests.get(api_url, headers=headers)
-    if not response:
+    try:
+        response = requests.get(api_url, headers=headers).json()['data']
+    except KeyError:
         response = {}
-        return render_template('placeTypes.html', menu=menu, title='Список типов мест',
-                               type_list=response)
     return render_template('placeTypes.html', menu=menu, title='Список типов мест',
-                           type_list=response.json()['data'])
+                           type_list=response)
 
 
 @app.route('/place_type_add', methods=["GET", "POST"])

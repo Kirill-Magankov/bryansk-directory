@@ -9,11 +9,22 @@
             </tr>
             {% for item in user_list %}
                 <tr>
-                    <td>{{ item['id'] }}</td>
-                    <td>{{ item['username'] }}</td>
-                    <td><a href="{{ url_for('.delete_user',user_id=item['id']) }}"><i class="fa fa-trash"
-                                                                                      aria-hidden="true"></i></a></td>
-                    <td><a href="{{ (url_for('.user_edit',user_id=item['id'])) }}"><i class="fas fa-edit"></i></a></td>
+                    {% if item['id'] != None %}
+                        <td>{{ item['id'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['username'] != None %}
+                        <td>{{ item['username'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    <td><a href="{{ url_for('.delete_user',user_id=item['id']) }}"><span class="material-symbols-outlined">
+delete
+</span></a></td>
+                    <td><a href="{{ (url_for('.user_edit',user_id=item['id'])) }}"><span class="material-symbols-outlined">
+edit
+</span></a></td>
                 </tr>
             {% endfor %}
 
