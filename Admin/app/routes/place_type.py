@@ -5,18 +5,6 @@ from app import app
 from app.constant import menu
 from app.forms.place_type import typeForm
 
-place_types_test = [
-    {
-        "id": 1,
-        "type_name": "Парк",
-        "description": "Место для проведения досуга"
-    },
-    {
-        "id": 2,
-        "type_name": "Кафе",
-        "description": "Место где можно покушать"
-    }
-]
 
 
 @app.route('/place_types')
@@ -24,15 +12,19 @@ def place_types_list():
     acces_token = request.cookies.get('access_token')
     if not acces_token:
         return redirect(url_for('.login'))
-    api_url = "http://localhost:5000/api/v1/places/types"
+    api_url = "http://localhost:8000/api/v1/places/types"
     headers = {'Authorization': 'Bearer %s' % acces_token}
     response = requests.get(api_url, headers=headers)
+    if not response:
+        response = {}
+        return render_template('placeTypes.html', menu=menu, title='Список типов мест',
+                               type_list=response)
     return render_template('placeTypes.html', menu=menu, title='Список типов мест',
                            type_list=response.json()['data'])
 
 
 @app.route('/place_type_add', methods=["GET", "POST"])
-def place_add():
+def place_type_add():
     form = typeForm(request.form, crsf=True)
     acces_token = request.cookies.get('access_token')
     if not acces_token:
@@ -40,7 +32,7 @@ def place_add():
     if form.validate_on_submit():
         type_name = form.type_name.data
         description = form.description.data
-        api_url = "http://localhost:5000/api/v1/places/types"
+        api_url = "http://localhost:8000/api/v1/places/types"
         data = {
             "type_name": type_name,
             "description": description
@@ -48,7 +40,7 @@ def place_add():
         headers = {'Authorization': 'Bearer %s' % acces_token}
         response = requests.post(api_url, headers=headers, json=data)
         if response.status_code == 200:
-            return render_template("places.html", title="Список мест", menu=menu)
+            return redirect(url_for('.place_types_list'))
         else:
             flash("Произошла ошибка, попробуйте позже", "danger")
     return render_template('typeForm.html', menu=menu, title='Добавление типа места', form=form)
@@ -59,7 +51,7 @@ def edit_type(place_type_id):
     acces_token = request.cookies.get('access_token')
     if not acces_token:
         return redirect(url_for('.login'))
-    api_url = "http://localhost:5000/api/v1/places/types/"
+    api_url = "http://localhost:8000/api/v1/places/types/"
 
     headers = {'Authorization': 'Bearer %s' % acces_token}
     form = typeForm(request.form, crsf=True)
@@ -91,7 +83,7 @@ def delete_type(place_type_id):
     acces_token = request.cookies.get('access_token')
     if not acces_token:
         return redirect(url_for('.login'))
-    api_url = "http://localhost:5000/api/v1/places/types/"
+    api_url = "http://localhost:8000/api/v1/places/types/"
     headers = {'Authorization': 'Bearer %s' % acces_token}
     response = requests.delete(api_url + place_type_id, headers=headers)
     if response.status_code == 200:

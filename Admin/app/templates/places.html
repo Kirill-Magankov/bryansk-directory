@@ -1,30 +1,26 @@
 {% extends "base.html" %}
 {% block content %}
     <div class="d-flex flex-column justify-content-center align-items-center">
-        <form method="post" class="mb-3">
-            <input type="text" class="form-control mb-3" placeholder="Поиск...">
-            <select class="form-select">
-                <option value="selected">Советский</option>
-                <option>Бежицкий</option>
-                <option>Володарский</option>
-                <option>Фокинский</option>
-            </select>
-            <select class="form-select">
-                <option value="selected">Парк</option>
-                <option>Отель</option>
-                <option>Ресторан</option>
-                <option>Кафе</option>
-            </select>
-            <select class="form-select">
-                <option value="selected">Лучшие оценки</option>
-                <option>Худшие оценки</option>
-            </select>
-            <input type="submit" class="btn btn-secondary" value="Поиск">
+        <form method="post" class="mb-3" style="width: 600px">
+            {{ form.hidden_tag() }}
+            <div class="row mb-3">
+                {{ form.search(class='form-control',placeholder='Поиск...') }}
+            </div>
+            <div class="row mb-3">
+                {{ form.neighborhood(class="form-control col-md-6") }}
+                {{ form.place_type(class="form-control col-md-6") }}
+
+            </div>
+            <div class="row">
+                {{ form.sort(class="form-control col-md-6") }}
+                {{ form.submit(class="btn btn-secondary col-md-6",required=True) }}
+            </div>
         </form>
     </div>
     <div class="d-flex flex-column justify-content-center align-items-center">
-        <table class="table table-striped">
+        <table class="table table-striped" style="width: 1200px">
             <tr>
+                <th>Номер записи</th>
                 <th>Название</th>
                 <th>Адрес</th>
                 <th>Описание</th>
@@ -32,37 +28,29 @@
                 <th>Оценка</th>
                 <th>Тип места</th>
                 <th>Район</th>
-                <th colspan="2"><input type="submit" class="btn btn-primary" value="Добавить"></th>
+                <th colspan="3"><a href="{{ url_for('place_add') }}" class="btn btn-primary">Добавить</a></th>
 
             </tr>
-            <tr>
-                <td>Курган-бессмертия</td>
-                <td>Брянск,ул. Дуки</td>
-                <td>Памятник жертвам ВОВ, олецетворяющий
-                    бессмертие их духа. Никто не забыт,
-                    ни что не забыто.
-                </td>
-                <td>Отсутствует</td>
-                <td>5</td>
-                <td>Парк</td>
-                <td>Советский</td>
-                <td><i class="fa fa-trash" aria-hidden="true"></i></td>
-                <td><i class="fas fa-edit"></i></td>
-            </tr>
-            <tr>
-                <td>Курган-бессмертия</td>
-                <td>Брянск,ул. Дуки</td>
-                <td>Памятник жертвам ВОВ, олецетворяющий
-                    бессмертие их духа. Никто не забыт,
-                    ни что не забыто.
-                </td>
-                <td>Отсутствует</td>
-                <td>5</td>
-                <td>Парк</td>
-                <td>Советский</td>
-                <td><i class="fa fa-trash" aria-hidden="true"></i></td>
-                <td><i class="fas fa-edit"></i></td>
-            </tr>
+            {% for item in places_list %}
+                <tr>
+                    <td>{{ item['id'] }}</td>
+                    <td>{{ item['name'] }}</td>
+                    <td>{{ item['address'] }}</td>
+                    <td>{{ item['description'] }}
+                    </td>
+                    <td>{{ item['phone_number'] }}</td>
+                    <td>{{ item['grade'] }}</td>
+                    <td>{{ item['place_type']['type_name'] }}</td>
+                    <td>{{ item['neighborhood']['name'] }}</td>
+                    <td><a href="{{ url_for('delete_place',place_id = item['id']) }}"><i class="fa fa-trash"></i></a>
+                    </td>
+                    <td><a href="{{ url_for('place_edit',place_id=item['id']) }}"><i class="fas fa-edit"
+                                                                                     aria-hidden="true"></i></a></td>
+                    <td><a href="{{ url_for('reviews_list',place_id=item['id']) }}"><i class="fa-solid fa-star"></i></a>
+                    </td>
+
+                </tr>
+            {% endfor %}
         </table>
     </div>
 {% endblock %}

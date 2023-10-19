@@ -5,23 +5,6 @@ from app import app
 from app.constant import menu
 from app.forms.neighborhoods import neighForm
 
-district_test = [
-    {
-        "id": 1,
-        "name": "Бежицкий",
-    },
-    {
-        "id": 2,
-        "name": "Советский",
-    }, {
-        "id": 3,
-        "name": "Володарский",
-    },
-    {
-        "id": 4,
-        "name": "Фокинский",
-    }
-]
 
 
 @app.route('/neighborhoods')
@@ -29,11 +12,16 @@ def neighborhoods_list():
     acces_token = request.cookies.get('access_token')
     if not acces_token:
         return redirect(url_for('.login'))
-    api_url = "http://localhost:5000/api/v1/places/neighborhood"
+    api_url = "http://localhost:8000/api/v1/places/neighborhood"
     headers = {'Authorization': 'Bearer %s' % acces_token}
     response = requests.get(api_url, headers=headers)
+    if not response:
+        response = {}
+        return render_template('neighborhoods.html', menu=menu, title='Список типов мест',
+                               neighborhoods_list=response)
     return render_template('neighborhoods.html', menu=menu, title='Список типов мест',
                            neighborhoods_list=response.json()['data'])
+
 
 
 @app.route('/neighborhood_add', methods=["GET", "POST"])
@@ -42,16 +30,16 @@ def neighborhood_add():
     acces_token = request.cookies.get('access_token')
     if not acces_token:
         return redirect(url_for('.login'))
-    if form.validate_on_submit():
+    if form.validate_on_submit() and request.method == "POST":
         name = form.name.data
-        api_url = "http://localhost:5000/api/v1/places/neighborhood"
+        api_url = "http://localhost:8000/api/v1/places/neighborhood"
         data = {
             "name": name
         }
         headers = {'Authorization': 'Bearer %s' % acces_token}
         response = requests.post(api_url, headers=headers, json=data)
         if response.status_code == 200:
-            return render_template("neighborhoods.html", title="Список районов", menu=menu)
+            return redirect(url_for('.neighborhoods_list'))
         else:
             flash("Произошла ошибка, попробуйте позже", "danger")
     return render_template('neighForm.html', menu=menu, title='Добавление района', form=form)
@@ -62,7 +50,7 @@ def edit_neighborhood(neighborhood_id):
     acces_token = request.cookies.get('access_token')
     if not acces_token:
         return redirect(url_for('.login'))
-    api_url = "http://localhost:5000/api/v1/places/neighborhood/"
+    api_url = "http://localhost:8000/api/v1/places/neighborhood/"
 
     headers = {'Authorization': 'Bearer %s' % acces_token}
     form = neighForm(request.form, crsf=True)
@@ -91,7 +79,7 @@ def delete_neighborhood(neighborhood_id):
     acces_token = request.cookies.get('access_token')
     if not acces_token:
         return redirect(url_for('.login'))
-    api_url = "http://localhost:5000/api/v1/places/neighborhood/"
+    api_url = "http://localhost:8000/api/v1/places/neighborhood/"
     headers = {'Authorization': 'Bearer %s' % acces_token}
     response = requests.delete(api_url + neighborhood_id, headers=headers)
     if response.status_code == 200:
