@@ -38,7 +38,7 @@ def user_add():
             headers = {'Authorization': 'Bearer %s' % acces_token}
             response = requests.post(api_url, headers=headers, json=data)
             if response.status_code == 200:
-                return redirect(url_for('places_list'))
+                return redirect(url_for('users_list'))
             else:
                 flash("Произошла ошибка, попробуйте позже", "danger")
     return render_template('regForm.html', menu=menu, title='Добавление пользователя', form=form)
