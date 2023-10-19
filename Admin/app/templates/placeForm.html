@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 50vh;">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        {% for message in messages %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        {% endwith %}
+        <form method="post">
+            {{ form.hidden_tag() }}
+            <img class="mb-3" src="/static/images/robot.png" alt="" width="70">
+            <h1 class="h3 mb-3 fw-normal">Заполните данные</h1>
+            <div class="row">
+                <div class="form-floating mb-3 col-md-6">
+                    <label for="name">Название места</label>
+                    {{ form.name(class="form-control",required=True,placeholder="Паназия. Суши - рум") }}
+                </div>
+                <div class="form-floating mb-3 col-md-6">
+                    <label for="address">Адрес места</label>
+                    {{ form.address(class="form-control",required=True,placeholder="Г.Брянск, ул. Ухтомского, 4") }}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-floating mb-3 col-md-12">
+                    <label for="description">Описание места</label>
+                    {{ form.description(class="form-control",required=True,placeholder="Ресторан паназиатской кухни") }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-floating mb-3 col-md-6">
+                    <label for="phone">Контактный номер</label>
+                    {{ form.phone(class="form-control",required=True,placeholder="+7-(483)-226-60-32") }}
+                </div>
+                <div class="form-floating mb-3 col-md-6">
+                    <label for="grade">Оценка </label>
+                    {{ form.grade(class="form-control",required=True) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-floating mb-3 col-md-6">
+                    <label for="neighborhood">Район</label>
+                    {{ form.neighborhood(class="form-control",required=True) }}
+                </div>
+                <div class="form-floating mb-3 col-md-6">
+                    <label for="place_type">Тип места</label>
+                    {{ form.place_type(class="form-control",required=True) }}
+                </div>
+            </div>
+
+            {{ form.submit(class="w-100 btn btn-lg btn-primary",required=True) }}
+        </form>
+    </div>
+{% endblock %}

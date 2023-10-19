@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="d-flex flex-column justify-content-center align-items-center" style="min-height: 50vh;">
+        <table class="table table-striped" style="max-width: 600px;">
+            <tr>
+                <th>Номер отзыва</th>
+                <th style="width: 200px">Дата отзыва</th>
+                <th>Имя автора</th>
+                <th>Описание</th>
+                <th>Ссылка</th>
+                <th>Оценка</th>
+                <th></th>
+            </tr>
+            {% for item in reviews_list %}
+                <tr>
+                    <td>{{ item['id'] }}</td>
+                    <td style="width: 200px">{{ item['date'] }}</td>
+                    <td>{{ item['author_name'] }}</td>
+                    <td>{{ item['description'] }}</td>
+                    <td>{{ item['url'] }}</td>
+                    <td>{{ item['grade'] }}</td>
+                    <td><a href="{{ url_for('.delete_user',user_id=item['id']) }}"><i class="fa fa-trash"
+                                                                                      aria-hidden="true"></i></a></td>
+
+                </tr>
+            {% endfor %}
+
+
+        </table>
+    </div>
+{% endblock %}

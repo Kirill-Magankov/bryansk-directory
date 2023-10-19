@@ -6,7 +6,7 @@ from wtforms.widgets import TextArea
 
 class typeForm(form):
     type_name = StringField('type_name', validators=[DataRequired(message='Обязательное поле'), Length(min=4, max=50)])
-    description = SubmitField('description',
+    description = StringField('description',
                               validators=[DataRequired(message='Обязательное поле'), Length(min=4, max=255)],
                               widget=TextArea())
     submit = SubmitField('Сохранить')
