@@ -206,17 +206,6 @@ class PlaceById(Resource):
         except Exception as e:
             return messages.ErrorMessage.unexpected_error(e)
 
-
-@api.route('/<string:place_name>')
-class PlaceByNameSearch(Resource):
-    def get(self, place_name):
-        """Поиск места по названию"""
-        places = PlaceModel.query.filter(PlaceModel.name.like(f'%{place_name}%')).all()
-        if not places or len(places) == 0: return messages.InfoMessage.no_entry('place')
-
-        return {'total': len(places),
-                'data': PlaceSchema(many=True).dump(places)}
-
     @jwt_required()
     @api.doc(security='Bearer')
     def delete(self, place_id):
@@ -230,6 +219,17 @@ class PlaceByNameSearch(Resource):
             return messages.InfoMessage.entry_delete('Place')
         except Exception as e:
             return messages.ErrorMessage.unexpected_error(e)
+
+
+@api.route('/<string:place_name>')
+class PlaceByNameSearch(Resource):
+    def get(self, place_name):
+        """Поиск места по названию"""
+        places = PlaceModel.query.filter(PlaceModel.name.like(f'%{place_name}%')).all()
+        if not places or len(places) == 0: return messages.InfoMessage.no_entry('place')
+
+        return {'total': len(places),
+                'data': PlaceSchema(many=True).dump(places)}
 
 
 # endregion
