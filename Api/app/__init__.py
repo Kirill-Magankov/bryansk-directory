@@ -94,13 +94,16 @@ def poll(id_):
 
         if entry.status == 'closed':
             return {'message': 'Feedback No. %i closed.' % entry.id,
-                    'data': {
-                        'user_id': entry.user_id,
-                        'comment': entry.comment
+                    'events': {
+                        'type': 'feedback_close',
+                        'data': {
+                            'user_id': entry.user_id,
+                            'comment': entry.comment
+                        }
                     }}
         time.sleep(2)
 
-    return {}, 204
+    return {'events': []}, 200
 
 
 @app.route('/closeFeedback/<int:id_>')
