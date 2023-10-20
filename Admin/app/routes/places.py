@@ -47,11 +47,10 @@ def places_list():
     form.place_type.choices = [('', 'По типу места')] + [(item, item) for item in names_types]
 
     page = request.args.get('page', 1, type=int)
-    per_page = 10
+    per_page = 5
 
     if request.method == "GET":
-        params = {'page': page, 'per_page': per_page}
-        response = requests.get(api_url, headers=headers, params=params)
+        response = requests.get(api_url, headers=headers)
         try:
             places_data = response.json()['data']
         except KeyError:
@@ -65,7 +64,7 @@ def places_list():
                                pagination=pagination)
 
     elif request.method == "POST":
-        params = {'page': page, 'per_page': per_page}
+        params = {}
 
         if form.place_type.data:
             params['type'] = form.place_type.data
@@ -81,10 +80,6 @@ def places_list():
             places_data = response.json()['data']
         except KeyError:
             places_data = []
-
-        form.neighborhood.data = request.form.get('neighborhood')
-        form.place_type.data = request.form.get('place_type')
-        form.sort.data = request.form.get('sort')
 
         return render_template('places.html', menu=menu, title='Список мест', places_list=places_data, form=form)
 

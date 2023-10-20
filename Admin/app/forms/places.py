@@ -7,6 +7,7 @@ from wtforms.widgets import TextArea
 class filterForm(form):
     neighborhood = SelectField()
     place_type = SelectField()
+    sort = SelectField(choices=[("asc","По возрастанию"),("desc","По убыванию")])
     submit = SubmitField('Поиск')
 
     def __init__(self, *args, **kwargs):

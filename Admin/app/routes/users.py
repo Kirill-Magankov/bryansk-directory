@@ -83,7 +83,7 @@ def user_edit(user_id):
 def delete_user(user_id):
     acces_token = request.cookies.get('access_token')
     if not acces_token:
-        return redirect(url_for('.login'))
+        return redirect(url_for('login'))
     api_url = "http://localhost:8000/api/v1/users/"
     headers = {'Authorization': 'Bearer %s' % acces_token}
     response = requests.delete(api_url + user_id, headers=headers)
