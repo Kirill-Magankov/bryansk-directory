@@ -12,3 +12,5 @@ class Config:
     API_VERSION = '0.1'
     API_TITLE = 'Справочник города Брянска'
     API_DESCRIPTION = 'API документация для проекта "Справочник города Брянска"'
+
+    API_URL = '/api/v1'
