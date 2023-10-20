@@ -15,6 +15,7 @@ from app.api.model.place_type import PlaceTypeModel
 from app.api.model.schemas import PlaceSchema, NeighborhoodSchema, PlaceTypeSchema, PlaceReviewSchema, PlaceImageSchema
 from app.db import db
 from app.utils import messages
+from app.utils.security_utils import get_uuid
 
 api = Namespace('Places', 'Справочник доступных мест и информации связанной с ними')
 
@@ -428,7 +429,7 @@ class PlaceUploadImage(Resource):
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
 
-        place_image_model = PlaceImageModel(file.read())
+        place_image_model = PlaceImageModel(file.read(), get_uuid())
         place.images.append(place_image_model)
 
         try:
