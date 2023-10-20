@@ -26,9 +26,9 @@ async def answer_all(callback: CallbackQuery):
         f"Тип места: {first_place['place_type']['type_name']}\n"
         f"Район: {first_place['neighborhood']['name']}\n"
         f"Адрес: {first_place['address']}\n"
-        f"Номер телефона: {first_place['phone_number']}\n"
+        f"Номер телефона: {first_place['phone_number'] if first_place['phone_number'] != None else 'отсутсвует'}\n"
         f"Оценка: {first_place['grade']}\n"
-        f"Описание: {first_place['description']}",
+        f"Описание: {first_place['description'] if first_place['description'] != None else 'отсутсвует'}",
                           reply_markup=pagination_kb(places_count, 1),
                           parse_mode="HTML"
     )
@@ -47,9 +47,9 @@ async def page(callback: CallbackQuery):
         f"Тип места: {next_place['place_type']['type_name']}\n"
         f"Район: {next_place['neighborhood']['name']}\n"
         f"Адрес: {next_place['address']}\n"
-        f"Номер телефона: {next_place['phone_number']}\n"
+        f"Номер телефона: {next_place['phone_number'] if next_place['phone_number'] != None else 'отсутсвует'}\n"
         f"Оценка: {next_place['grade']}\n"
-        f"Описание: {next_place['description']}",
+        f"Описание: {next_place['description'] if next_place['description'] != None else 'отсутсвует'}",
         reply_markup=pagination_kb(places_count, page),
         parse_mode="HTML"
     )
