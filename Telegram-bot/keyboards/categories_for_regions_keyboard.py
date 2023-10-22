@@ -9,6 +9,7 @@ def categories_kb():
     places_types = response.json()['data']
     for item in places_types:
         buttons.append([InlineKeyboardButton(text=f"{item['type_name']}", callback_data=f"see_type_{item['type_name']}")])
+    buttons.append([InlineKeyboardButton(text="Показать все места района", callback_data=f"see_type_{item['type_name']}")])
     buttons.append([InlineKeyboardButton(text="На главную", callback_data="main")])
     kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     return kb

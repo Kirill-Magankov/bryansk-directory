@@ -2,9 +2,11 @@ import requests as requests
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
+from aiogram.utils.markdown import hide_link
 
 from keyboards.start_keyboard import start_kb
-from keyboards.pagination_keyboard import pagination_kb
+from keyboards.regions_keyboard import regions_kb
+from keyboards.pagination_keyboard_types import pagination_kb_types
 
 router = Router()
 
@@ -15,44 +17,64 @@ async def cmd_start(message: Message):
         reply_markup=start_kb()
     )
 
-@router.callback_query(F.data == "see_all")
-async def answer_all(callback: CallbackQuery):
+@router.callback_query(F.data == "see_regions")
+async def answer_types(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "Выбери район: ",
+        reply_markup=regions_kb()
+    )
+
+@router.callback_query(F.data.startswith('see_type_'))
+async def answer_types_places(callback: CallbackQuery):
     api_url = "http://localhost:8000/api/v1/places"
-    response = requests.get(api_url)
+    type_filter = callback.data.split('_')[2]
+    response = requests.get(api_url + "?type=" + str(type_filter) + "&sort=" + "asc")
     first_place = response.json()['data'][0]
     places_count = response.json()['total']
-    await callback.message.edit_text(text=
-        f"Название: {first_place['name']}\n"
+    try:
+        first_place_img = first_place['images'][0]['uuid']
+    except:
+        first_place_img = ''
+    await callback.message.edit_text(
+        text=
+        f"{hide_link('http://localhost:8000/api/v1/places/images/' + first_place_img) if first_place_img != '' else 'Изображение отсутствует'}"
+        f"\nНазвание: {first_place['name']}\n"
         f"Тип места: {first_place['place_type']['type_name']}\n"
         f"Район: {first_place['neighborhood']['name']}\n"
         f"Адрес: {first_place['address']}\n"
         f"Номер телефона: {first_place['phone_number'] if first_place['phone_number'] != None else 'отсутсвует'}\n"
         f"Оценка: {first_place['grade']}\n"
         f"Описание: {first_place['description'] if first_place['description'] != None else 'отсутсвует'}",
-                          reply_markup=pagination_kb(places_count, 1),
-                          parse_mode="HTML"
+        parse_mode="HTML",
+        reply_markup=pagination_kb_types(places_count, 1, type_filter)
     )
 
-@router.callback_query(F.data.startswith('page_'))
+@router.callback_query(F.data.startswith('type_page_'))
 async def page(callback: CallbackQuery):
-    page = int(callback.data.split('_')[1])
+    page = int(callback.data.split('_')[2])
+    type_filter = callback.data.split('_')[3]
     api_url = "http://localhost:8000/api/v1/places"
-    response = requests.get(api_url)
+    response = requests.get(api_url + "?type=" + str(type_filter) + "&sort=" + "asc")
     next_place = response.json()['data'][page-1]
     places_count = response.json()['total']
-    kb = pagination_kb(places_count, page)
+    try:
+        next_place_img = next_place['images'][0]['uuid']
+    except:
+        next_place_img = ''
     await callback.message.edit_text(
         text=
-        f"Название: {next_place['name']}\n"
+        f"{hide_link('http://localhost:8000/api/v1/places/images/' + next_place_img) if next_place_img != '' else 'Изображение отсутствует'}"
+        f"\nНазвание: {next_place['name']}\n"
         f"Тип места: {next_place['place_type']['type_name']}\n"
         f"Район: {next_place['neighborhood']['name']}\n"
         f"Адрес: {next_place['address']}\n"
         f"Номер телефона: {next_place['phone_number'] if next_place['phone_number'] != None else 'отсутсвует'}\n"
         f"Оценка: {next_place['grade']}\n"
         f"Описание: {next_place['description'] if next_place['description'] != None else 'отсутсвует'}",
-        reply_markup=pagination_kb(places_count, page),
-        parse_mode="HTML"
+        parse_mode="HTML",
+        reply_markup=pagination_kb_types(places_count, page, type_filter)
     )
+
 @router.callback_query(F.data == "main")
 async def back_to_main(callback: CallbackQuery):
     await callback.message.edit_text(

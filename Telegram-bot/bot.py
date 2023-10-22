@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher
 from config_reader import config
 from aiogram import types
 from aiogram.filters import Command
-from handlers import start_handler
+from handlers import see_all_handler, see_types_handler
 
 logging.basicConfig(level=logging.INFO)
 
@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 async def main():
     bot = Bot(token=config.bot_token.get_secret_value())
     dp = Dispatcher()
-    dp.include_router(start_handler.router)
+    dp.include_routers(see_all_handler.router, see_types_handler.router)
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
