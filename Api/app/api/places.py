@@ -39,7 +39,7 @@ neighborhood_model = api.model('Neighborhood', {
 
 review_model = api.model('Review', {
     'id': fields.Integer(readonly=True),
-    'date': fields.DateTime(default=datetime.now(), required=True),
+    'date': fields.Date(default=datetime.now(), required=True),
     'author_name': NullableString,
     'description': NullableString,
     'url': NullableString,
