@@ -39,7 +39,7 @@ neighborhood_model = api.model('Neighborhood', {
 
 review_model = api.model('Review', {
     'id': fields.Integer(readonly=True),
-    'date': fields.DateTime(default=datetime.now(), required=True),
+    'date': fields.Date(default=datetime.now(), required=True),
     'author_name': NullableString,
     'description': NullableString,
     'url': NullableString,
@@ -459,19 +459,20 @@ class PlaceReviewList(Resource):
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
 
-        review_data = PlaceReviewModel(date=data.get('date'),
+        review_data = PlaceReviewModel(date=datetime.strptime(data.get('date'), '%Y-%m-%d'),
                                        author_name=data.get('author_name'),
                                        description=data.get('description'),
                                        url=data.get('url'),
                                        grade=data.get('grade'))
 
-        try:
-            place.reviews.append(review_data)
-            db.session.commit()
-            return {'message': 'Place review successfully added',
-                    'data': PlaceReviewSchema().dump(review_data)}
-        except Exception as e:
-            return messages.ErrorMessage.unexpected_error(e)
+        place.reviews.append(review_data)
+        db.session.commit()
+        return {'message': 'Place review successfully added',
+                'data': PlaceReviewSchema().dump(review_data)}
+        # try:
+        #
+        # except Exception as e:
+        #     return messages.ErrorMessage.unexpected_error(e)
 
 
 @api.route('/reviews/<int:review_id>')
