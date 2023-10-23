@@ -9,7 +9,7 @@ def regions_kb():
     places_regions = response.json()['data']
     for item in places_regions:
         buttons.append(
-            [InlineKeyboardButton(text=f"{item['name']}", callback_data=f"see_region_{item['type_name']}")])
+            [InlineKeyboardButton(text=f"{item['name']}", callback_data=f"see_region_{item['name']}")])
     buttons.append([InlineKeyboardButton(text="На главную", callback_data="main")])
     kb = InlineKeyboardMarkup(inline_keyboard=buttons)
     return kb
