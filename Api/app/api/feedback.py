@@ -19,7 +19,7 @@ feedback_model = api.model('Feedback', {
     'tg_chat_id': fields.String(required=True),
     'email': NullableString,
     'status': fields.String(readonly=True),
-    'message': NullableString,
+    'message': fields.String(required=True),
     'comment': fields.String(readonly=True),
 })
 feedback_model_put = api.model('FeedbackStatus', {
