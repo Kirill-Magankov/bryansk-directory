@@ -1,3 +1,6 @@
+import time
+from datetime import datetime
+
 from flask_jwt_extended import jwt_required
 from flask_restx import Resource, Namespace, fields, reqparse
 
@@ -107,3 +110,35 @@ class FeedbackById(Resource):
             return {'message': 'Feedback successfully deleted'}
         except Exception as e:
             return messages.ErrorMessage.unexpected_error(e)
+
+
+@api.route('/<int:feedback_id>/feedback-notify')
+class FeedbackNotify(Resource):
+    def get(self, feedback_id):
+        """Long polling запрос на ожидание изменения статуса заявки (обращения)"""
+        feedback = FeedbackModel.query.get(feedback_id)
+
+        if not feedback: return {'message': 'Feedback not found', 'events': []}, 404
+        if feedback.status == 'Closed': return {'message': 'Feedback already closed', 'events': []}
+        feedback: FeedbackModel
+        start = time.time()
+
+        while time.time() - start < 30:
+            db.session.close()
+            feedback = FeedbackModel.query.get(feedback_id)
+
+            print(feedback.status)
+            if feedback.status == 'Closed':
+                return {'message': 'Feedback status changed to closed.',
+                        'events': {
+                            'type': 'feedback_closed',
+                            'data': {
+                                'tg_username': feedback.tg_username,
+                                'user_id': feedback.tg_user_id,
+                                'chat_id': feedback.tg_chat_id,
+                                'comment': feedback.comment
+                            }
+                        }}
+            time.sleep(2)
+
+        return {'events': []}, 200

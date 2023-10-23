@@ -1,6 +1,6 @@
 from flask import Flask, redirect
 from flask_cors import CORS
-from healthcheck import HealthCheck, EnvironmentDump
+from healthcheck import HealthCheck
 from sqlalchemy import text
 
 from app.utils.blocklist import BLOCKLIST
