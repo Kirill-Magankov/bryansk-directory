@@ -31,7 +31,7 @@ feedback_parser.add_argument('status', choices=['Open', 'Closed'])
 
 @api.route('')
 class FeedbackList(Resource):
-    # @jwt_required()
+    @jwt_required()
     @api.doc(security='Bearer')
     @api.expect(feedback_parser)
     def get(self):
@@ -67,14 +67,14 @@ class FeedbackList(Resource):
 @api.route('/<int:feedback_id>')
 @api.doc(security='Bearer')
 class FeedbackById(Resource):
-    # @jwt_required()
+    @jwt_required()
     def get(self, feedback_id):
         """Получение заявки по идентификатору"""
         feedback = FeedbackModel.query.get(feedback_id)
         if not feedback: return messages.ErrorMessage.entry_not_exist('Feedback')
         return {'data': FeedbackSchema().dump(feedback)}
 
-    # @jwt_required()
+    @jwt_required()
     @api.expect(feedback_model_put, validate=True)
     def put(self, feedback_id):
         """Обновление статуса заявки"""
@@ -95,7 +95,7 @@ class FeedbackById(Resource):
         except Exception as e:
             return messages.ErrorMessage.unexpected_error(e)
 
-    # @jwt_required()
+    @jwt_required()
     def delete(self, feedback_id):
         """Удаление заявки"""
         feedback = FeedbackModel.query.get(feedback_id)
