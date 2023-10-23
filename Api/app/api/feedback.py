@@ -112,7 +112,7 @@ class FeedbackById(Resource):
             return messages.ErrorMessage.unexpected_error(e)
 
 
-@api.route('/<int:feedback_id>/feedback-notify')
+@api.route('/<int:feedback_id>/notify')
 class FeedbackNotify(Resource):
     def get(self, feedback_id):
         """Long polling запрос на ожидание изменения статуса заявки (обращения)"""
