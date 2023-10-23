@@ -452,8 +452,6 @@ class PlaceReviewList(Resource):
         if len(place.reviews) == 0: return messages.InfoMessage.no_entry('reviews')
         return {'data': PlaceReviewSchema(many=True).dump(place.reviews)}
 
-    @jwt_required()
-    @api.doc(security='Bearer')
     @api.expect(review_model, validate=True)
     def post(self, place_id):
         """Добавление отзыва о месте"""
