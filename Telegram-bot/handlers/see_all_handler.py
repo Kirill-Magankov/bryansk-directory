@@ -1,9 +1,12 @@
+import base64
+import threading
 from datetime import datetime
 
 import requests as requests
-from aiogram import Router, F
+from aiogram import Router, F, types
+from aiogram.client.session import aiohttp
 from aiogram.filters import Command
-from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
+from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove, URLInputFile, InputMediaPhoto
 from aiogram.utils.markdown import hide_link
 from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -74,55 +77,62 @@ async def page(callback: CallbackQuery):
         reply_markup=pagination_kb(places_count, page, next_place['id'])
     )
 
+    @router.callback_query(F.data.startswith('review_'))
+    async def leave_review(callback: CallbackQuery, state: FSMContext):
+        await state.update_data(place_id=callback.data.split('_')[1])
+        await callback.message.answer(
+            text="Введите своё имя",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        await state.set_state(LeaveReview.author_name)
 
-@router.callback_query(F.data.startswith('review_'))
-async def leave_review(callback: CallbackQuery, state: FSMContext):
-    await state.update_data(place_id=callback.data.split('_')[1])
-    await callback.message.answer(
-        text="Введите своё имя",
-        reply_markup=ReplyKeyboardRemove()
-    )
-    await state.set_state(LeaveReview.author_name)
+    @router.message(LeaveReview.author_name)
+    async def leave_review(message: Message, state: FSMContext):
+        await message.answer(
+            text="Введите текст отзыва",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        await state.update_data(author_name=message.text)
+        await state.set_state(LeaveReview.description)
 
+    @router.message(LeaveReview.description)
+    async def leave_review(message: Message, state: FSMContext):
+        await message.answer(
+            text="Введите оценку:",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        await state.update_data(description=message.text)
+        await state.set_state(LeaveReview.grade)
 
-@router.message(LeaveReview.author_name)
-async def leave_review(message: Message, state: FSMContext):
-    await message.answer(
-        text="Введите текст отзыва",
-        reply_markup=ReplyKeyboardRemove()
-    )
-    await state.update_data(author_name=message.text)
-    await state.set_state(LeaveReview.description)
+    async def long_polling(data):
+        print(data)
+        feedback_id = data.get('feedback_id')
+        resp = requests.get(f'{API_URL}/feedbacks/{feedback_id}/notify')
+        print(resp)
 
+    @router.message(LeaveReview.grade)
+    async def leave_review(message: Message, state: FSMContext):
+        await state.update_data(grade=message.text)
+        user_data = await state.get_data()
+        review = json.dumps({'date': datetime.now().strftime('%Y-%m-%d'), 'author_name': user_data['author_name'],
+                             'description': user_data['description'], 'url': None, 'grade': int(user_data['grade'])})
+        print(review)
+        response = requests.post(f'{API_URL}/places/{user_data["place_id"]}/reviews', json=review)
+        await message.answer(
+            text="Поздравляю! Ваш отзыв был успешно зарегистрирован",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[[InlineKeyboardButton(text=f"На главную", callback_data="main")]])
+        )
+        print(response)
+        print(response.content)
+        print(response.text)
+        event = threading.Thread(target=long_polling, args=response)
+        event.start()
+        await state.clear()
 
-@router.message(LeaveReview.description)
-async def leave_review(message: Message, state: FSMContext):
-    await message.answer(
-        text="Введите оценку:",
-        reply_markup=ReplyKeyboardRemove()
-    )
-    await state.update_data(description=message.text)
-    await state.set_state(LeaveReview.grade)
-
-
-@router.message(LeaveReview.grade)
-async def leave_review(message: Message, state: FSMContext):
-    await state.update_data(grade=message.text)
-    user_data = await state.get_data()
-    review = json.dumps({'date': str(datetime.now()), 'author_name': user_data['author_name'],
-                         'description': user_data['description'], 'url': None, 'grade': user_data['grade']})
-    response = requests.post(f'{API_URL}/{user_data["place_id"]}/reviews', review)
-    await message.answer(
-        text="Поздравляю! Ваш отзыв был успешно зарегистрирован",
-        reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[[InlineKeyboardButton(text=f"На главную", callback_data="main")]])
-    )
-    await state.clear()
-
-
-@router.callback_query(F.data == "main")
-async def back_to_main(callback: CallbackQuery):
-    await callback.message.edit_text(
-        "Привет!👋 В этом боте ты сможешь посмотреть самые интересные места города Брянска! Выбери, с чего начать:",
-        reply_markup=start_kb()
-    )
+    @router.callback_query(F.data == "main")
+    async def back_to_main(callback: CallbackQuery):
+        await callback.message.edit_text(
+            "Привет!👋 В этом боте ты сможешь посмотреть самые интересные места города Брянска! Выбери, с чего начать:",
+            reply_markup=start_kb()
+        )
