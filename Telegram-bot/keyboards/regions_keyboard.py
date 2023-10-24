@@ -4,7 +4,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 def regions_kb():
     buttons = []
-    api_url = "http://localhost:8000/api/v1/places/neighborhood"
+    api_url = "https://bryansk-directory-startup.onrender.com/api/v1/places/neighborhood"
     response = requests.get(api_url)
     places_regions = response.json()['data']
     for item in places_regions:

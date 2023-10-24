@@ -4,7 +4,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 def categories_kb():
     buttons = []
-    api_url = "http://localhost:8000/api/v1/places/types"
+    api_url = "https://bryansk-directory-startup.onrender.com/api/v1/places/types"
     response = requests.get(api_url)
     places_types = response.json()['data']
     for item in places_types:
