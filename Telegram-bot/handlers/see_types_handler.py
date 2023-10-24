@@ -4,11 +4,13 @@ from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.utils.markdown import hide_link
 
+from constants import API_URL
 from keyboards.start_keyboard import start_kb
 from keyboards.categories_keyboard import categories_kb
 from keyboards.pagination_keyboard_types import pagination_kb_types
 
 router = Router()
+
 
 @router.message(Command("start"))
 async def cmd_start(message: Message):
@@ -17,6 +19,7 @@ async def cmd_start(message: Message):
         reply_markup=start_kb()
     )
 
+
 @router.callback_query(F.data == "see_categories")
 async def answer_types(callback: CallbackQuery):
     await callback.message.edit_text(
@@ -24,9 +27,10 @@ async def answer_types(callback: CallbackQuery):
         reply_markup=categories_kb()
     )
 
+
 @router.callback_query(F.data.startswith('see_type_'))
 async def answer_types_places(callback: CallbackQuery):
-    api_url = "http://localhost:8000/api/v1/places"
+    api_url = API_URL + "/places"
     type_filter = callback.data.split('_')[2]
     response = requests.get(api_url + "?type=" + str(type_filter) + "&sort=" + "asc")
     first_place = response.json()['data'][0]
@@ -37,7 +41,7 @@ async def answer_types_places(callback: CallbackQuery):
         first_place_img = ''
     await callback.message.edit_text(
         text=
-        f"{hide_link('http://localhost:8000/api/v1/places/images/' + first_place_img) if first_place_img != '' else 'Изображение отсутствует'}"
+        f"{hide_link(API_URL + '/places/images/' + first_place_img) if first_place_img != '' else 'Изображение отсутствует'}"
         f"\nНазвание: {first_place['name']}\n"
         f"Тип места: {first_place['place_type']['type_name']}\n"
         f"Район: {first_place['neighborhood']['name']}\n"
@@ -49,13 +53,14 @@ async def answer_types_places(callback: CallbackQuery):
         reply_markup=pagination_kb_types(places_count, 1, type_filter)
     )
 
+
 @router.callback_query(F.data.startswith('type_page_'))
 async def page(callback: CallbackQuery):
     page = int(callback.data.split('_')[2])
     type_filter = callback.data.split('_')[3]
-    api_url = "http://localhost:8000/api/v1/places"
+    api_url = API_URL + "/places"
     response = requests.get(api_url + "?type=" + str(type_filter) + "&sort=" + "asc")
-    next_place = response.json()['data'][page-1]
+    next_place = response.json()['data'][page - 1]
     places_count = response.json()['total']
     try:
         next_place_img = next_place['images'][0]['uuid']
@@ -63,7 +68,7 @@ async def page(callback: CallbackQuery):
         next_place_img = ''
     await callback.message.edit_text(
         text=
-        f"{hide_link('http://localhost:8000/api/v1/places/images/' + next_place_img) if next_place_img != '' else 'Изображение отсутствует'}"
+        f"{hide_link(API_URL + '/places/images/' + next_place_img) if next_place_img != '' else 'Изображение отсутствует'}"
         f"\nНазвание: {next_place['name']}\n"
         f"Тип места: {next_place['place_type']['type_name']}\n"
         f"Район: {next_place['neighborhood']['name']}\n"
@@ -74,6 +79,7 @@ async def page(callback: CallbackQuery):
         parse_mode="HTML",
         reply_markup=pagination_kb_types(places_count, page, type_filter)
     )
+
 
 @router.callback_query(F.data == "main")
 async def back_to_main(callback: CallbackQuery):

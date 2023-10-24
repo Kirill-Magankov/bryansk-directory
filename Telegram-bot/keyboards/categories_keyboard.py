@@ -2,9 +2,12 @@ import requests as requests
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from constants import API_URL
+
+
 def categories_kb():
     buttons = []
-    api_url = "http://localhost:8000/api/v1/places/types"
+    api_url = API_URL + "/places/types"
     response = requests.get(api_url)
     places_types = response.json()['data']
     for item in places_types:

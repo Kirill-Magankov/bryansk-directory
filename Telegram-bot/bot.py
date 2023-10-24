@@ -9,6 +9,7 @@ from handlers import see_all_handler, see_types_handler, see_regions_handler
 
 logging.basicConfig(level=logging.INFO)
 
+
 # Запуск бота
 async def main():
     bot = Bot(token=config.bot_token.get_secret_value())
