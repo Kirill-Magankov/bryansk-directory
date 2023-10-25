@@ -5,7 +5,7 @@ from flask import request, redirect, url_for, render_template, flash
 from werkzeug.utils import secure_filename
 
 from app import app
-from app.constant import menu
+from app.constant import menu, api_url
 from app.forms.images import imageForm
 
 
@@ -14,12 +14,12 @@ def image_list(place_id):
     acces_token = request.cookies.get('access_token')
     if not acces_token:
         return redirect(url_for('.login'))
-    api_url = "http://localhost:8000/api/v1/places/" + place_id + "/images"
-    image_url = 'http://localhost:8000/api/v1/places/images/'
+
+    image_url = api_url + "places/images/"
     headers = {'Authorization': 'Bearer %s' % acces_token}
 
     try:
-        response = requests.get(api_url, headers=headers).json()['data']
+        response = requests.get(api_url + "places/" + place_id + "/images", headers=headers).json()['data']
     except KeyError:
         response = {}
     images_list = []
@@ -38,23 +38,20 @@ def image_add(place_id):
     form = imageForm(request.files, crfs=True)
     if request.method == "POST":
         if 'image' not in request.files:
-            flash('No file part', 'danger')
+            flash('Не указан путь к файлу', 'danger')
             return redirect(request.url)
         file = form.image.data
         if file.filename == '':
-            flash('No selected file', 'danger')
+            flash('Файл не выбран', 'danger')
             return redirect(request.url)
         if file:
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            api_url = f"http://localhost:8000/api/v1/places/{place_id}/uploadImage"
-            with open(os.path.join(app.config['UPLOAD_FOLDER'], filename), 'rb') as f:
-                files = {'file': (filename, f, 'multipart/form-data')}
-                response = requests.post(api_url, headers=headers, files=files)
+            files = {'file': (filename, file, 'multipart/form-data')}
+            response = requests.post(api_url + "places/"+place_id+"/uploadImage", headers=headers, files=files)
             if response.status_code == 200:
                 return redirect(url_for('image_list', place_id=place_id))
-        else:
-            flash("Не выбран файл для загрузки", "danger")
+            else:
+                flash("Не удалось загрузить изображение", "danger")
     return render_template('imageForm.html', menu=menu, title='Добавление картинки', form=form)
 
 
@@ -63,8 +60,7 @@ def delete_image(uuid):
     acces_token = request.cookies.get('access_token')
     if not acces_token:
         return redirect(url_for('login'))
-    api_url = 'http://localhost:8000/api/v1/places/images/'
     headers = {'Authorization': 'Bearer %s' % acces_token}
-    response = requests.delete(api_url + uuid, headers=headers)
+    response = requests.delete(api_url + 'places/images/' + uuid, headers=headers)
     if response.status_code == 200:
         return redirect(url_for('places_list'))

@@ -7,7 +7,6 @@ from wtforms.widgets import TextArea
 class filterForm(form):
     neighborhood = SelectField()
     place_type = SelectField()
-    sort = SelectField(choices=[("asc","По возрастанию"),("desc","По убыванию")])
     submit = SubmitField('Поиск')
 
     def __init__(self, *args, **kwargs):
@@ -18,9 +17,8 @@ class placeForm(form):
     name = StringField('name', validators=[DataRequired(message='Обязательное поле'), Length(min=4, max=100)])
     address = StringField('address', validators=[DataRequired(message='Обязательное поле'), Length(min=4, max=255)])
     description = StringField('description',
-                              validators=[DataRequired(message='Обязательное поле'), Length(min=4, max=255)],
                               widget=TextArea())
-    phone = StringField('phone', validators=[DataRequired(message='Обязательное поле'), Length(min=11, max=11)])
+    phone = StringField('phone', validators=[Length(max=11)])
     grade = FloatField('grade', validators=[DataRequired(message='Обязательное поле')])
     neighborhood = SelectField(validators=[DataRequired(message='Обязательное поле')])
     place_type = SelectField(validators=[DataRequired(message='Обязательное поле')])

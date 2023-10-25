@@ -5,7 +5,7 @@ from flask import render_template, request, redirect, url_for
 from flask_paginate import get_page_parameter, Pagination
 
 from app import app
-from app.constant import menu
+from app.constant import menu, api_url
 from app.forms.places import placeForm, filterForm
 
 
@@ -23,10 +23,9 @@ def places_list():
     if not access_token:
         return redirect(url_for('login'))
 
-    api_url = "http://localhost:8000/api/v1/places"
     headers = {'Authorization': f'Bearer {access_token}'}
-    filter_url = "http://localhost:8000/api/v1/places/types"
-    neigh_url = "http://localhost:8000/api/v1/places/neighborhood"
+    filter_url = api_url + "places/types"
+    neigh_url = api_url + "places/neighborhood"
 
     neighborhoods = requests.get(neigh_url, headers=headers)
     types = requests.get(filter_url, headers=headers)
@@ -50,7 +49,7 @@ def places_list():
     per_page = 5
 
     if request.method == "GET":
-        response = requests.get(api_url, headers=headers)
+        response = requests.get(api_url + "places", headers=headers)
         try:
             places_data = response.json()['data']
         except KeyError:
@@ -72,14 +71,11 @@ def places_list():
         if form.neighborhood.data:
             params['neighborhood'] = form.neighborhood.data
 
-        if form.sort.data:
-            params['sort'] = form.sort.data
-
-        response = requests.get(api_url, headers=headers, params=params)
+        response = requests.get(api_url + "places", headers=headers, params=params)
         try:
             places_data = response.json()['data']
         except KeyError:
-            places_data = []
+            places_data = {}
 
         return render_template('places.html', menu=menu, title='Список мест', places_list=places_data, form=form)
 
@@ -91,14 +87,14 @@ def place_add():
         return redirect(url_for('.login'))
     form = placeForm(request.form, crsf=True)
     headers = {'Authorization': 'Bearer %s' % acces_token}
-    neigh_url = "http://localhost:8000/api/v1/places/neighborhood"
-    types_url = "http://localhost:8000/api/v1/places/types"
+    neigh_url = api_url + "places/neighborhood"
+    types_url = api_url + "places/types"
     neighborhoods = requests.get(neigh_url, headers=headers)
     types = requests.get(types_url, headers=headers)
     res_neighs = neighborhoods.json()['data']
     res_types = types.json()['data']
     if not res_types and not res_neighs:
-        return redirect(url_for('.places_list'))
+        return redirect(url_for('places_list'))
     names_neighs = []
     names_types = []
     for item in res_neighs:
@@ -108,7 +104,6 @@ def place_add():
     form.neighborhood.choices = names_neighs
     form.place_type.choices = names_types
     if request.method == "POST":
-        api_url = "http://localhost:8000/api/v1/places"
         data = {
             "place_type": {
                 "type_name": form.place_type.data,
@@ -123,7 +118,7 @@ def place_add():
             "phone_number": form.phone.data,
             "grade": form.grade.data
         }
-        response = requests.post(api_url, headers=headers, json=data)
+        response = requests.post(api_url + "places", headers=headers, json=data)
         if response.status_code == 200:
             return redirect(url_for('.places_list'))
     return render_template("placeForm.html", form=form, menu=menu, title="Добавление места")
@@ -136,8 +131,8 @@ def place_edit(place_id):
         return redirect(url_for('.login'))
     form = placeForm(request.form, crsf=True)
     headers = {'Authorization': 'Bearer %s' % acces_token}
-    neigh_url = "http://localhost:8000/api/v1/places/neighborhood"
-    types_url = "http://localhost:8000/api/v1/places/types"
+    neigh_url = api_url + "places/neighborhood"
+    types_url = api_url + "places/types"
     neighborhoods = requests.get(neigh_url, headers=headers)
     types = requests.get(types_url, headers=headers)
     res_neighs = neighborhoods.json()['data']
@@ -153,8 +148,7 @@ def place_edit(place_id):
     form.neighborhood.choices = names_neighs
     form.place_type.choices = names_types
     if request.method == "GET":
-        api_url = "http://localhost:8000/api/v1/places/"
-        cur_place_data = requests.get(api_url + place_id, headers=headers)
+        cur_place_data = requests.get(api_url + "places/" + place_id, headers=headers)
         form.name.data = cur_place_data.json()['data'].get('name')
         form.address.data = cur_place_data.json()['data'].get('address')
         form.description.data = cur_place_data.json()['data'].get('description')
@@ -163,7 +157,6 @@ def place_edit(place_id):
         form.neighborhood.data = cur_place_data.json()['data']['neighborhood'].get('name')
         form.place_type.data = cur_place_data.json()['data']['place_type'].get('type_name')
     if request.method == "POST":
-        api_url = "http://localhost:8000/api/v1/places/"
         data = {
             "place_type": {
                 "type_name": form.place_type.data,
@@ -178,9 +171,9 @@ def place_edit(place_id):
             "phone_number": form.phone.data,
             "grade": form.grade.data
         }
-        response = requests.put(api_url + place_id, headers=headers, json=data)
+        response = requests.put(api_url + "places/" + place_id, headers=headers, json=data)
         if response.status_code == 200:
-            return redirect(url_for('.places_list'))
+            return redirect(url_for('places_list'))
     return render_template("placeForm.html", form=form, menu=menu, title="Изменение места")
 
 
@@ -189,8 +182,7 @@ def delete_place(place_id):
     acces_token = request.cookies.get('access_token')
     if not acces_token:
         return redirect(url_for('.login'))
-    api_url = "http://localhost:8000/api/v1/places/"
     headers = {'Authorization': 'Bearer %s' % acces_token}
-    response = requests.delete(api_url + place_id, headers=headers)
+    response = requests.delete(api_url + "/places" + place_id, headers=headers)
     if response.status_code == 200:
         return redirect(url_for('.places_list'))

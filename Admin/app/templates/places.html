@@ -4,9 +4,8 @@
         <form method="post" class="mb-3" style="width: 600px">
             {{ form.hidden_tag() }}
             <div class="row mb-3">
-                {{ form.neighborhood(class="form-control col-md-4") }}
-                {{ form.place_type(class="form-control col-md-4") }}
-                {{ form.sort(class="form-control col-md-4") }}
+                {{ form.neighborhood(class="form-control col-md-6") }}
+                {{ form.place_type(class="form-control col-md-6") }}
             </div>
             <div class="row">
                 {{ form.submit(class="btn btn-secondary col-md-12", required=True) }}

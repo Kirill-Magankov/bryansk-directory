@@ -12,17 +12,14 @@
         {% endif %}
     {% endwith %}
     <div class="d-flex justify-content-center align-items-center" style="min-height: 75vh;">
+
         <form method="post">
             {{ form.hidden_tag() }}
             <img class="mb-3" src="/static/images/robot.png" alt="" width="70">
-            <h1 class="h3 mb-3 fw-normal">Тип места</h1>
+            <h1 class="h3 mb-3 fw-normal">Обратная связь</h1>
             <div class="form-floating mb-3">
-                <label for="floatingInput">Название</label>
-                {{ form.type_name(class="form-control",required=True,placeholder="Парк") }}
-            </div>
-            <div class="form-floating mb-3">
-                <label for="floatingPassword">Описание</label>
-                {{ form.description(class="form-control", placeholder="Место для отдыха") }}
+                <label for="floatingInput">Сообщение</label>
+                {{ form.message(class="form-control",required=True) }}
             </div>
             {{ form.submit(class="w-100 btn btn-lg btn-primary",required=True) }}
         </form>
