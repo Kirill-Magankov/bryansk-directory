@@ -15,9 +15,9 @@ api = Namespace('Feedbacks', 'Обратная связь')
 feedback_model = api.model('Feedback', {
     'id': fields.Integer(readonly=True),
     'tg_username': NullableString,
-    'tg_user_id': fields.String(required=True),
-    'tg_chat_id': fields.String(required=True),
-    'email': NullableString,
+    'tg_user_id': NullableString,
+    'tg_chat_id': NullableString,
+    'email': fields.String(required=True),
     'status': fields.String(readonly=True),
     'message': fields.String(required=True),
     'comment': fields.String(readonly=True),

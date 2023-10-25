@@ -83,6 +83,19 @@ class UserById(Resource):
         except Exception as e:
             return messages.ErrorMessage.unexpected_error(e)
 
+    @jwt_required()
+    def delete(self, user_id):
+        """Удаление пользователя по его идентификатору"""
+        user = UserModel.query.get(user_id)
+        if not user: return messages.ErrorMessage.user_not_exist()
+
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            return {'message': 'User successfully deleted'}
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
+
 
 @api.route('/login')
 class UserLoginResource(Resource):

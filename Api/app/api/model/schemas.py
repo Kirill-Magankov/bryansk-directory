@@ -39,7 +39,7 @@ class PlaceTypeSchema(ma.SQLAlchemyAutoSchema):
 
 class PlaceImageSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'uuid')
+        fields = ('id', 'uuid', 'url')
 
 
 class PlaceReviewSchema(ma.SQLAlchemyAutoSchema):

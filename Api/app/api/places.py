@@ -1,6 +1,9 @@
+import base64
 import io
+import json
 from datetime import datetime
 
+import requests
 from flask import send_file, url_for
 from flask_jwt_extended import jwt_required
 from flask_restx import Namespace, Resource, reqparse, fields
@@ -413,6 +416,16 @@ class PlaceImageByUuid(Resource):
             return messages.ErrorMessage.unexpected_error(e)
 
 
+@api.route('/images/<string:uuid>/url')
+class PlaceImageByUuidGetUrl(Resource):
+    def get(self, uuid):
+        """Получение url для изображения"""
+        place_image = PlaceImageModel.query.filter(PlaceImageModel.uuid == uuid).first()
+        if not place_image: return messages.ErrorMessage.entry_not_exist('Image')
+        if not place_image.url: return messages.ErrorMessage.entry_not_exist('Image url')
+        return {'url': place_image.url}
+
+
 @api.route('/<int:place_id>/uploadImage')
 class PlaceUploadImage(Resource):
     @jwt_required()
@@ -429,7 +442,22 @@ class PlaceUploadImage(Resource):
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
 
-        place_image_model = PlaceImageModel(file.read(), get_uuid())
+        upload_image = file.read()
+
+        imgbb_url = 'https://api.imgbb.com/1/upload'
+        imgbb_data = {
+            'key': '833c6798233b087292d9bb4b97d610f9',
+            'image': base64.b64encode(upload_image)
+        }
+
+        dump_url = None
+        try:
+            imgbb_response = requests.post(imgbb_url, data=imgbb_data)
+            dump_url = imgbb_response.json().get('data').get('url')
+        except:
+            pass
+
+        place_image_model = PlaceImageModel(upload_image, get_uuid(), dump_url)
         place.images.append(place_image_model)
 
         try:
@@ -459,20 +487,19 @@ class PlaceReviewList(Resource):
         place = PlaceModel.query.get(place_id)
         if not place: return messages.ErrorMessage.entry_not_exist('Place')
 
-        review_data = PlaceReviewModel(date=datetime.strptime(data.get('date'), '%Y-%m-%d'),
+        review_data = PlaceReviewModel(date=data.get('date'),
                                        author_name=data.get('author_name'),
                                        description=data.get('description'),
                                        url=data.get('url'),
                                        grade=data.get('grade'))
 
-        place.reviews.append(review_data)
-        db.session.commit()
-        return {'message': 'Place review successfully added',
-                'data': PlaceReviewSchema().dump(review_data)}
-        # try:
-        #
-        # except Exception as e:
-        #     return messages.ErrorMessage.unexpected_error(e)
+        try:
+            place.reviews.append(review_data)
+            db.session.commit()
+            return {'message': 'Place review successfully added',
+                    'data': PlaceReviewSchema().dump(review_data)}
+        except Exception as e:
+            return messages.ErrorMessage.unexpected_error(e)
 
 
 @api.route('/reviews/<int:review_id>')
