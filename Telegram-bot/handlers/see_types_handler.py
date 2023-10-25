@@ -11,7 +11,7 @@ from texts.error_text import get_error_text
 from texts.start_text import get_start_text
 from texts.places_text import get_place_text
 
-from constants import API_URL
+from constants import API_URL, API_URL_IMAGES
 
 router = Router()
 
@@ -29,11 +29,14 @@ async def answer_types_places(callback: CallbackQuery):
     api_url = API_URL + "/places"
     type_filter = callback.data.split('_')[2]
     response = requests.get(api_url + "?type=" + str(type_filter) + "&sort=" + "asc")
+    api_url_img = API_URL_IMAGES + "/places"
+    response_img = requests.get(api_url_img + "?type=" + str(type_filter) + "&sort=" + "asc")
     if response.ok:
         first_place = response.json()['data'][0]
         places_count = response.json()['total']
         try:
-            first_place_img = first_place['images'][0]['uuid']
+            first_place2 = response_img.json()['data'][0]
+            first_place_img = first_place2['images'][0]['uuid']
         except:
             first_place_img = ''
         answer_text = get_place_text(first_place, first_place_img)
@@ -55,11 +58,14 @@ async def page(callback: CallbackQuery):
     type_filter = callback.data.split('_')[3]
     api_url = API_URL + "/places"
     response = requests.get(api_url + "?type=" + str(type_filter) + "&sort=" + "asc")
+    api_url_img = API_URL_IMAGES + "/places"
+    response_img = requests.get(api_url_img + "?type=" + str(type_filter) + "&sort=" + "asc")
     if response.ok:
         next_place = response.json()['data'][page - 1]
         places_count = response.json()['total']
         try:
-            next_place_img = next_place['images'][0]['uuid']
+            next_place2 = response_img.json()['data'][page - 1]
+            next_place_img = next_place2['images'][0]['uuid']
         except:
             next_place_img = ''
         answer_text = get_place_text(next_place, next_place_img)

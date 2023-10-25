@@ -44,8 +44,8 @@ async def leave_feedback(message: Message, state: FSMContext):
     user_data = await state.get_data()
     pattern = re.compile(r'[\w.-]+@[\w-]+\.(com|ru)')
     if pattern.match(user_data['email']):
-        feedback = {'tg_username': user_data['username'], 'tg_user_id': user_data['user_id'],
-                    'tg_chat_id': user_data['chat_id'], 'email': user_data['email'], 'message': user_data['comment']}
+        feedback = {'tg_username': user_data['username'], 'tg_user_id': str(user_data['user_id']),
+                    'tg_chat_id': str(user_data['chat_id']), 'email': user_data['email'], 'message': user_data['comment']}
         response = requests.post(API_URL + "/feedbacks", json=feedback)
         if response.ok:
             answer_text = "✅Поздравляю! Ваше обращение было успешно зарегистрировано"

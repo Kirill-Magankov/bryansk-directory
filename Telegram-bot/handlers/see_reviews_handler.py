@@ -23,7 +23,7 @@ async def see_reviews(callback: CallbackQuery):
     if response.ok:
         try:
             first_review = response.json()['data'][0]
-            reviews_count = response.json()['total']
+            reviews_count = len(response.json()['data'])
             answer_text = get_review_text(first_review)
             answer_kb = pagination_kb_reviews(reviews_count, 1, place_id)
         except:
@@ -48,7 +48,7 @@ async def see_reviews_next(callback: CallbackQuery):
     response = requests.get(api_url)
     if response.ok:
         next_review = response.json()['data'][page - 1]
-        reviews_count = response.json()['total']
+        reviews_count = len(response.json()['data'])
         answer_text = get_review_text(next_review)
         answer_kb = pagination_kb_reviews(reviews_count, page, place_id)
     else:

@@ -12,7 +12,7 @@ from texts.error_text import get_error_text
 from texts.places_text import get_place_text
 from texts.start_text import get_start_text
 
-from constants import API_URL
+from constants import API_URL, API_URL_IMAGES
 
 router = Router()
 router.include_routers(see_reviews_handler.router, leave_review_handler.router,
@@ -30,11 +30,14 @@ async def main_menu(message: Message):
 @router.callback_query(F.data == "see_all")
 async def answer_all(callback: CallbackQuery):
     api_url = API_URL + "/places"
+    api_url_img = API_URL_IMAGES + "/places"
+    response_img = requests.get(api_url_img)
     response = requests.get(api_url)
     if response.ok:
         first_place = response.json()['data'][0]
         try:
-            first_place_img = first_place['images'][0]['uuid']
+            first_place2 = response_img.json()['data'][0]
+            first_place_img = first_place2['images'][0]['uuid']
         except:
             first_place_img = ''
         places_count = response.json()['total']
@@ -55,10 +58,13 @@ async def page(callback: CallbackQuery):
     page = int(callback.data.split("_")[1])
     api_url = API_URL + "/places"
     response = requests.get(api_url)
+    api_url_img = API_URL_IMAGES + "/places"
+    response_img = requests.get(api_url_img)
     if response.ok:
         next_place = response.json()['data'][page - 1]
         try:
-            next_place_img = next_place['images'][0]['uuid']
+            next_place2 = response_img.json()['data'][page - 1]
+            next_place_img = next_place2['images'][0]['uuid']
         except:
             next_place_img = ''
         places_count = response.json()['total']
