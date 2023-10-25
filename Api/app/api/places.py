@@ -416,6 +416,16 @@ class PlaceImageByUuid(Resource):
             return messages.ErrorMessage.unexpected_error(e)
 
 
+@api.route('/images/<string:uuid>/url')
+class PlaceImageByUuidGetUrl(Resource):
+    def get(self, uuid):
+        """Получение url для изображения"""
+        place_image = PlaceImageModel.query.filter(PlaceImageModel.uuid == uuid).first()
+        if not place_image: return messages.ErrorMessage.entry_not_exist('Image')
+        if not place_image.url: return messages.ErrorMessage.entry_not_exist('Image url')
+        return {'url': place_image.url}
+
+
 @api.route('/<int:place_id>/uploadImage')
 class PlaceUploadImage(Resource):
     @jwt_required()
