@@ -6,9 +6,9 @@ class FeedbackModel(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     tg_username = db.Column(db.String(255))
-    tg_user_id = db.Column(db.String(15), nullable=False)
-    tg_chat_id = db.Column(db.String(15), nullable=False)
-    email = db.Column(db.String(255))
+    tg_user_id = db.Column(db.String(15))
+    tg_chat_id = db.Column(db.String(15))
+    email = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(10), nullable=False)
     message = db.Column(db.String(255), nullable=False)
     comment = db.Column(db.String(255))
