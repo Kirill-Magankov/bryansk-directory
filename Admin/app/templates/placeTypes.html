@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="d-flex flex-column justify-content-center align-items-center" style="min-height: 50vh;">
+        <table class="table table-striped" style="max-width:800px;">
+            <tr>
+                <th>Номер записи</th>
+                <th>Тип места</th>
+                <th>Описание</th>
+                <th colspan="2"><a href="/place_type_add" class="btn btn-primary mb-3">Добавить</a></th>
+            </tr>
+            {% for item in type_list %}
+                <tr>
+                    {% if item['id'] != None %}
+                        <td>{{ item['id'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['type_name'] != None %}
+                        <td>{{ item['type_name'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['description'] != None %}
+                        <td>{{ item['description'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    <td><a href="{{ url_for('.delete_type',place_type_id=item['id']) }}"><span
+                            class="material-symbols-outlined">
+delete
+</span></a>
+                    </td>
+                    <td><a href="{{ (url_for('.edit_type',place_type_id=item['id'])) }}"><span
+                            class="material-symbols-outlined">
+edit
+</span></a>
+                    </td>
+                </tr>
+            {% endfor %}
+
+
+        </table>
+    </div>
+{% endblock %}

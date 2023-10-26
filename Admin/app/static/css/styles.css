@@ -1,0 +1,21 @@
+* {
+    margin: 0px;
+    padding: 0px;
+    font-family: 'Inter', sans-serif;
+}
+
+nav .navbar-nav li a {
+    font-size: 18px;
+    color: white !important;
+}
+
+nav .navbar-nav li a:hover {
+    transition: 1s;
+    color: #b9b7b7 !important;
+}
+
+.auth {
+    max-width: 600px;
+    margin: auto;
+}
+

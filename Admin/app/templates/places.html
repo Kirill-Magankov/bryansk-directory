@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="d-flex flex-column justify-content-center align-items-center">
+        <form method="post" class="mb-3" style="width: 600px">
+            {{ form.hidden_tag() }}
+            <div class="row mb-3">
+                {{ form.neighborhood(class="form-control col-md-6") }}
+                {{ form.place_type(class="form-control col-md-6") }}
+            </div>
+            <div class="row">
+                {{ form.submit(class="btn btn-secondary col-md-12", required=True) }}
+            </div>
+        </form>
+    </div>
+
+    <div class="d-flex flex-column justify-content-center align-items-center">
+        <div class="row">
+            <h5>Список мест</h5>
+        </div>
+        <table class="table table-striped" style="width: 1200px; max-height: 500px">
+            <tr>
+                <th>Номер записи</th>
+                <th>Название</th>
+                <th>Адрес</th>
+                <th>Описание</th>
+                <th>Номер телефона</th>
+                <th>Оценка</th>
+                <th>Тип места</th>
+                <th>Район</th>
+                <th colspan="4" class="text-center"><a href="{{ url_for('place_add') }}" class="btn btn-primary">Добавить</a>
+                </th>
+            </tr>
+            {% for item in places_list %}
+                <tr>
+                    {% if item['id'] != None %}
+                        <td>{{ item['id'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['name'] != None %}
+                        <td>{{ item['name'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['address'] != None %}
+                        <td>{{ item['address'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['description'] != None %}
+                        <td>{{ item['description'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['phone_number'] != None %}
+                        <td>{{ item['phone_number'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['grade'] != None %}
+                        <td>{{ item['grade'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    <td>{{ item['place_type']['type_name'] }}</td>
+                    <td>{{ item['neighborhood']['name'] }}</td>
+                    <td><a href="{{ url_for('delete_place', place_id=item['id']) }}"><span
+                            class="material-symbols-outlined">
+delete
+</span></a>
+                    </td>
+                    <td><a href="{{ url_for('place_edit', place_id=item['id']) }}"><span
+                            class="material-symbols-outlined">
+edit
+</span></a></td>
+                    <td><a href="{{ url_for('reviews_list', place_id=item['id']) }}"><span
+                            class="material-symbols-outlined">
+reviews
+</span></a></td>
+                    <td><a href="{{ url_for('image_list', place_id=item['id']) }}"><span
+                            class="material-symbols-outlined">
+imagesmode
+</span></a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% if pagination %}
+       <div class="d-flex justify-content-center mb-3">
+            <div class="pagination">
+                {% for page_num in range(1, pagination.total + 1) %}
+                    {% if pagination.page == page_num %}
+                        <a class="page-link" href="#">{{ page_num }}</a>
+                    {% else %}
+                        <a class="page-link"
+                           href="{{ url_for('places_list', page=page_num, per_page=pagination.per_page) }}">{{ page_num }}</a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

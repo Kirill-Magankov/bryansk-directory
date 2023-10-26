@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="d-flex flex-column justify-content-center align-items-center" style="min-height: 50vh;">
+        <table class="table table-striped" style="max-width: 20vh;">
+            <tr>
+                <th>Номер записи</th>
+                <th>Имя пользователя</th>
+                <th colspan="2"><a href="/user_add" class="btn btn-primary mb-3">Добавить</a></th>
+            </tr>
+            {% for item in user_list %}
+                <tr>
+                    {% if item['id'] != None %}
+                        <td>{{ item['id'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['username'] != None %}
+                        <td>{{ item['username'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    <td><a href="{{ url_for('.delete_user',user_id=item['id']) }}"><span class="material-symbols-outlined">
+delete
+</span></a></td>
+                    <td><a href="{{ (url_for('.user_edit',user_id=item['id'])) }}"><span class="material-symbols-outlined">
+edit
+</span></a></td>
+                </tr>
+            {% endfor %}
+
+
+        </table>
+    </div>
+{% endblock %}

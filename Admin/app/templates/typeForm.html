@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-danger d-flex justify-content-center align-items-center" style="max-height: 75vh;">
+                <ul class="mb-0">
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 75vh;">
+        <form method="post">
+            {{ form.hidden_tag() }}
+            <img class="mb-3" src="/static/images/robot.png" alt="" width="70">
+            <h1 class="h3 mb-3 fw-normal">Тип места</h1>
+            <div class="form-floating mb-3">
+                <label for="floatingInput">Название</label>
+                {{ form.type_name(class="form-control",required=True,placeholder="Парк") }}
+            </div>
+            <div class="form-floating mb-3">
+                <label for="floatingPassword">Описание</label>
+                {{ form.description(class="form-control", placeholder="Место для отдыха") }}
+            </div>
+            {{ form.submit(class="w-100 btn btn-lg btn-primary",required=True) }}
+        </form>
+    </div>
+{% endblock %}

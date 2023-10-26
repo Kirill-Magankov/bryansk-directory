@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="d-flex flex-column justify-content-center align-items-center" style="min-height: 50vh;">
+        <table class="table table-striped" style="max-width: 50vh;">
+            <tr>
+                <th>Номер записи</th>
+                <th>Почта</th>
+                <th>Сообщение</th>
+                <th>Cтатус</th>
+                <th>Комментарий</th>
+                <th colspan="2"></th>
+            </tr>
+            {% for item in feedback_list %}
+                <tr>
+                    {% if item['id'] != None %}
+                        <td>{{ item['id'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['email'] != None %}
+                        <td>{{ item['email'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['message'] != None %}
+                        <td>{{ item['message'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    {% if item['status'] == 'Open' %}
+                        <td>Открыта</td>
+                    {% else %}
+                        <td>Закрыта</td>
+                    {% endif %}
+                    {% if item['comment'] != None %}
+                        <td>{{ item['comment'] }}</td>
+                    {% else %}
+                        <td>Отсутствует</td>
+                    {% endif %}
+                    <td><a href="{{ url_for('delete_feedback',feedback_id=item['id']) }}"><span
+                            class="material-symbols-outlined">
+delete
+</span></a></td>
+                    {% if item['status'] != 'Open' %}
+
+                    {% else %}
+                        <td><a href="{{ url_for('send_feedback',feedback_id=item['id']) }}"><span
+                                class="material-symbols-outlined">
+done
+</span></a></td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+{% endblock %}
