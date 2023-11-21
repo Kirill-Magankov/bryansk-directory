@@ -36,7 +36,7 @@ async def answer_types_places(callback: CallbackQuery):
         places_count = response.json()['total']
         try:
             first_place2 = response_img.json()['data'][0]
-            first_place_img = first_place2['images'][0]['uuid']
+            first_place_img = first_place2['images'][0]['url']
         except:
             first_place_img = ''
         answer_text = get_place_text(first_place, first_place_img)

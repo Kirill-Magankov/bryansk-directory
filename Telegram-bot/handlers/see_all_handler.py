@@ -37,7 +37,7 @@ async def answer_all(callback: CallbackQuery):
         first_place = response.json()['data'][0]
         try:
             first_place2 = response_img.json()['data'][0]
-            first_place_img = first_place2['images'][0]['uuid']
+            first_place_img = first_place2['images'][0]['url']
         except:
             first_place_img = ''
         places_count = response.json()['total']
@@ -60,13 +60,16 @@ async def page(callback: CallbackQuery):
     response = requests.get(api_url)
     api_url_img = API_URL_IMAGES + "/places"
     response_img = requests.get(api_url_img)
+    print(api_url_img)
+
     if response.ok:
         next_place = response.json()['data'][page - 1]
         try:
             next_place2 = response_img.json()['data'][page - 1]
-            next_place_img = next_place2['images'][0]['uuid']
+            next_place_img = next_place2['images'][0]['url']
         except:
             next_place_img = ''
+
         places_count = response.json()['total']
         answer_text = get_place_text(next_place, next_place_img)
         answer_kb = pagination_kb(places_count, page, next_place['id'])
